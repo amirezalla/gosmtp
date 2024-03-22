@@ -27,7 +27,7 @@ class CustomHandler(Message):
         print(f"Body: {body}")
 
         # Forwarding the email via a POST request
-        response = requests.post('http://localhost:8000/api/sendEmail', json={
+        response = requests.post('sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
             "from": mail_from,
             "recipients": rcpt_tos,
             "message": body,

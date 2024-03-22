@@ -2,7 +2,7 @@ import smtplib
 from email.mime.text import MIMEText
 
 # Replace these values with your actual data
-smtp_host = '192.168.45.113'  # Use the IP of the machine where the SMTP server is running
+smtp_host = '34.29.73.169'  # Use the IP of the machine where the SMTP server is running
 smtp_port = 1025  # The port your SMTP server is listening on
 from_addr = 'd.mazzucchi@icoa.it'  # Sender's email address
 to_addr = 'allahverdiamirreza@gmail.com'  # Recipient's email address
