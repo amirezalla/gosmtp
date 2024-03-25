@@ -63,7 +63,7 @@ class CustomHandler:
                     async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
                         print(f"POST request response: {response.status}, {await response.text()}")
 
-                return '250 Message accepted for delivery'
+                return b'250 Message accepted for delivery'
 
 if __name__ == "__main__":
     ip_address = get_local_ip_address()
