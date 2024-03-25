@@ -16,54 +16,43 @@ def get_local_ip_address():
         return 'localhost'  # Fallback to localhost if unable to determine IP
 
 class CustomHandler:
-    async def handle_DATA(self,server, session, envelope):
+    async def handle_DATA(self, server, session, envelope):
         mail_from = envelope.mail_from
         rcpt_tos = envelope.rcpt_tos
         data = envelope.content  # Email content in bytes
         
-        # Convert the bytes data to a message object
         message = message_from_bytes(data)
         subject = message.get('Subject', 'No Subject')
-        
-        # Initialize body as an empty string
         body = ''
         
         if message.is_multipart():
-            # Handle multipart messages
             for part in message.walk():
-                # Check if the part is of a content type we're interested in
                 if part.get_content_type() == 'text/plain':
-                    # Safely get the payload, decode if possible
                     payload = part.get_payload(decode=True)
                     if payload:
                         body += payload.decode('utf-8', errors='replace')
-                    else:
-                        body += ' [Unable to decode content] '
-                    # Assuming we only want to read the first text/plain part found
-                    break
+                    break  # Only interested in the first text/plain part
         else:
-            # Handle non-multipart messages
             payload = message.get_payload(decode=True)
             if payload:
                 body = payload.decode('utf-8', errors='replace')
             else:
                 body = ' [No content] '
         
+        payload = {
+            "from": mail_from,
+            "recipients": list(rcpt_tos),
+            "subject": subject,
+            "message": body,
+        }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
+                print(f"POST request response: {response.status}, {await response.text()}")
+        
+        # Ensure response is in bytes
+        return b'250 Message accepted for delivery'
 
-                # Prepare the payload for the POST request
-                payload = {
-                    "from": mail_from,
-                    "recipients": rcpt_tos,
-                    "subject": subject,
-                    "message": body,
-                }
-
-                # Use aiohttp to send the POST request asynchronously
-                async with aiohttp.ClientSession() as session:
-                    async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
-                        print(f"POST request response: {response.status}, {await response.text()}")
-
-                return b'250 Message accepted for delivery'
 
 if __name__ == "__main__":
     ip_address = get_local_ip_address()
