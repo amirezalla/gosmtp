@@ -1,9 +1,9 @@
 import asyncio
 import aiohttp
 from aiosmtpd.controller import Controller
-from aiosmtpd.handlers import Message
-from email import message_from_bytes
+from aiosmtpd.smtp import Envelope, Session
 import socket
+from email import message_from_bytes
 
 def get_local_ip_address():
     """Attempt to find the local IP address of the machine."""
@@ -14,34 +14,33 @@ def get_local_ip_address():
     except Exception:
         return 'localhost'  # Fallback to localhost if unable to determine IP
 
-class CustomHandler(Message):
-    async def handle_DATA(self,envelope):
-        mail_from = envelope.mail_from
-        rcpt_tos = envelope.rcpt_tos
-        data = envelope.content  # Email content in bytes
+class CustomHandler:
+        async def handle_DATA(self, server, session: Session, envelope: Envelope):
+            mail_from = envelope.mail_from
+            rcpt_tos = envelope.rcpt_tos
+            data = envelope.content  # Email content in bytes
 
-        # Convert the bytes data to a message object
-        message = message_from_bytes(data)
+            # Convert the bytes data to a message object
+            message = message_from_bytes(data)
 
-        # Extract subject and body, assuming plain text for simplicity
-        subject = message.get('Subject', 'No Subject')
-        body = message.get_payload(decode=True).decode('utf-8', errors='replace')
+            # Assuming the body is plain text for simplicity
+            subject = message.get('Subject', 'No Subject')
+            body = message.get_payload(decode=True).decode('utf-8', errors='replace')
 
-        # Prepare the payload for the POST request
-        payload = {
-            "from": mail_from,
-            "recipients": rcpt_tos,
-            "subject": subject,
-            "message": body,
-        }
+            # Prepare the payload for the POST request
+            payload = {
+                "from": mail_from,
+                "recipients": rcpt_tos,
+                "subject": subject,
+                "message": body,
+            }
 
-        # Use aiohttp to send the POST request asynchronously
-        async with aiohttp.ClientSession() as session:
-            async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
-                print(f"POST request response: {response.status}, {await response.text()}")
+            # Use aiohttp to send the POST request asynchronously
+            async with aiohttp.ClientSession() as session:
+                async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
+                    print(f"POST request response: {response.status}, {await response.text()}")
 
-        # Return SMTP server response to indicate successful handling
-        return '250 Message accepted for delivery'
+            return '250 Message accepted for delivery'
 
 if __name__ == "__main__":
     ip_address = get_local_ip_address()
