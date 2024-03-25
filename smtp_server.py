@@ -4,6 +4,7 @@ from aiosmtpd.controller import Controller
 from aiosmtpd.smtp import Envelope, Session
 import socket
 from email import message_from_bytes
+from email.message import EmailMessage
 
 def get_local_ip_address():
     """Attempt to find the local IP address of the machine."""
@@ -15,32 +16,54 @@ def get_local_ip_address():
         return 'localhost'  # Fallback to localhost if unable to determine IP
 
 class CustomHandler:
-        async def handle_DATA(self, server, session: Session, envelope: Envelope):
-            mail_from = envelope.mail_from
-            rcpt_tos = envelope.rcpt_tos
-            data = envelope.content  # Email content in bytes
+    async def handle_DATA(self, session, envelope):
+        mail_from = envelope.mail_from
+        rcpt_tos = envelope.rcpt_tos
+        data = envelope.content  # Email content in bytes
+        
+        # Convert the bytes data to a message object
+        message = message_from_bytes(data)
+        subject = message.get('Subject', 'No Subject')
+        
+        # Initialize body as an empty string
+        body = ''
+        
+        if message.is_multipart():
+            # Handle multipart messages
+            for part in message.walk():
+                # Check if the part is of a content type we're interested in
+                if part.get_content_type() == 'text/plain':
+                    # Safely get the payload, decode if possible
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        body += payload.decode('utf-8', errors='replace')
+                    else:
+                        body += ' [Unable to decode content] '
+                    # Assuming we only want to read the first text/plain part found
+                    break
+        else:
+            # Handle non-multipart messages
+            payload = message.get_payload(decode=True)
+            if payload:
+                body = payload.decode('utf-8', errors='replace')
+            else:
+                body = ' [No content] '
+        
 
-            # Convert the bytes data to a message object
-            message = message_from_bytes(data)
+                # Prepare the payload for the POST request
+                payload = {
+                    "from": mail_from,
+                    "recipients": rcpt_tos,
+                    "subject": subject,
+                    "message": body,
+                }
 
-            # Assuming the body is plain text for simplicity
-            subject = message.get('Subject', 'No Subject')
-            body = message.get_payload(decode=True).decode('utf-8', errors='replace')
+                # Use aiohttp to send the POST request asynchronously
+                async with aiohttp.ClientSession() as session:
+                    async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
+                        print(f"POST request response: {response.status}, {await response.text()}")
 
-            # Prepare the payload for the POST request
-            payload = {
-                "from": mail_from,
-                "recipients": rcpt_tos,
-                "subject": subject,
-                "message": body,
-            }
-
-            # Use aiohttp to send the POST request asynchronously
-            async with aiohttp.ClientSession() as session:
-                async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
-                    print(f"POST request response: {response.status}, {await response.text()}")
-
-            return '250 Message accepted for delivery'
+                return '250 Message accepted for delivery'
 
 if __name__ == "__main__":
     ip_address = get_local_ip_address()
