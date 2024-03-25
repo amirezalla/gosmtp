@@ -16,7 +16,7 @@ def get_local_ip_address():
         return 'localhost'  # Fallback to localhost if unable to determine IP
 
 class CustomHandler:
-    async def handle_DATA(self, session, envelope):
+    async def handle_DATA(self,server, session, envelope):
         mail_from = envelope.mail_from
         rcpt_tos = envelope.rcpt_tos
         data = envelope.content  # Email content in bytes
