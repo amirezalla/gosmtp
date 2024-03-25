@@ -16,7 +16,7 @@ def get_local_ip_address():
         return 'localhost'  # Fallback to localhost
 
 class CustomHandler(Message):
-    async def handle_DATA(self, server, session, envelope):
+    async def handle_message(self, envelope):
         mail_from = envelope.mail_from
         rcpt_tos = envelope.rcpt_tos
         data = envelope.content  # This is the raw email content as bytes
@@ -41,7 +41,7 @@ class CustomHandler(Message):
                 "message": body,
                 "subject": subject
             }
-            async with session.post('https://your-endpoint.example.com/api/sendEmail', json=payload) as response:
+            async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
                 print(f"POST request response: {response.status}, {await response.text()}")
 
         return '250 Message accepted for delivery'
