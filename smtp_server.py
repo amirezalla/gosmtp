@@ -1,5 +1,5 @@
 from aiosmtpd.controller import Controller
-from aiosmtpd.handlers import Handler
+from aiosmtpd.handlers import Message
 import asyncio
 import aiohttp
 from email import message_from_bytes
@@ -15,7 +15,7 @@ def get_local_ip_address():
     except Exception:
         return 'localhost'  # Fallback to localhost
 
-class CustomHandler(Handler):
+class CustomHandler(Message):
     async def handle_DATA(self, server, session, envelope):
         mail_from = envelope.mail_from
         rcpt_tos = envelope.rcpt_tos
