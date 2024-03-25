@@ -46,9 +46,18 @@ class CustomHandler(Message):
 if __name__ == "__main__":
     ip_address = get_local_ip_address()
     port = 1025
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     handler = CustomHandler()
     controller = Controller(handler, hostname=ip_address, port=port)
 
     print(f"SMTP server is running at {ip_address}:{port}. Press Ctrl+C to shut down.")
     controller.start()
+
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        print("Shutting down.")
+    finally:
+        controller.stop()
