@@ -3,6 +3,7 @@ from aiosmtpd.handlers import Message
 import requests
 import asyncio
 import socket
+import aiohttp
 from email import message_from_bytes
 import json
 
@@ -38,18 +39,15 @@ class CustomHandler(Message):
         print(f"Subject: {subject}")
         print(f"Body: {body}")
 
-        # Now, `recipients`, `mail_from`, `subject`, and `body` should be JSON serializable
-        payload = {
-            "from": mail_from,
-            "recipients": recipients,
-            "message": body,
-            "subject": subject
-        }
-
-        # Ensure that you serialize payload to JSON when making the POST request
-        response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload)
-
-        print(f"POST request response: {response.status_code}, {response.text}")
+        async with aiohttp.ClientSession() as session:
+            payload = {
+                "from": mail_from,
+                "recipients": list(rcpt_tos),
+                "message": body,  # Assume you've extracted the body as shown previously
+                "subject": subject,
+            }
+            async with session.post('https://your-endpoint.example.com/api/sendEmail', json=payload) as response:
+                print(f"POST request response: {response.status}, {await response.text()}")
 
         return '250 Message accepted for delivery'
 
