@@ -4,12 +4,12 @@ from email.mime.text import MIMEText
 # Replace these values with your actual data
 smtp_host = '34.29.73.169'  # Use the IP of the machine where the SMTP server is running
 smtp_port = 1025  # The port your SMTP server is listening on
-from_addr = 'd.mazzucchi@icoa.it'  # Sender's email address
-to_addr = 'allahverdiamirreza@gmail.com'  # Recipient's email address
+from_addr = 'a.allahverdi@icoa.it'  # Sender's email address
+to_addr = 's.akbarzadeh@icoa.it'  # Recipient's email address
 
 # Create a text/plain message
-msg = MIMEText('This is the body of the test email.')
-msg['Subject'] = 'Test Email from smtp'
+msg = MIMEText('WHAT THE FUCK SIAVASH?')
+msg['Subject'] = 'SHOCK!!!!!!!!!'
 msg['From'] = from_addr
 msg['To'] = to_addr
 

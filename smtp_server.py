@@ -3,6 +3,8 @@ from aiosmtpd.handlers import Message
 import requests
 import asyncio
 import socket
+from email import message_from_bytes
+import json
 
 def get_local_ip_address():
     """Attempt to find the local IP address of the machine."""
@@ -15,27 +17,40 @@ def get_local_ip_address():
         return 'localhost'  # Fallback to localhost
 
 class CustomHandler(Message):
-    def handle_message(self, message):
-        mail_from = message['from']
-        rcpt_tos = message['to']
-        subject = message['subject']
-        body = message.get_payload()
-        
+    async def handle_DATA(self, server, session, envelope):
+        mail_from = envelope.mail_from
+        rcpt_tos = envelope.rcpt_tos
+        data = envelope.content  # This is the raw email content
+
+        # Convert the raw email data to a Message object
+        message = message_from_bytes(data)
+
+        # Assuming the body is plain text for simplicity; adjust as needed for MIME/multipart
+        body = message.get_payload(decode=True).decode('utf-8', errors='replace')
+
+        subject = message.get('Subject', '')
+
+        # Convert to and recipients to simple lists for JSON serialization
+        recipients = list(rcpt_tos)
+
         print(f"Receiving message from: {mail_from}")
-        print(f"Message addressed to: {rcpt_tos}")
+        print(f"Message addressed to: {recipients}")
         print(f"Subject: {subject}")
         print(f"Body: {body}")
 
-        # Forwarding the email via a POST request
-        response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
+        # Now, `recipients`, `mail_from`, `subject`, and `body` should be JSON serializable
+        payload = {
             "from": mail_from,
-            "recipients": rcpt_tos,
+            "recipients": recipients,
             "message": body,
             "subject": subject
-        })
+        }
+
+        # Ensure that you serialize payload to JSON when making the POST request
+        response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload)
 
         print(f"POST request response: {response.status_code}, {response.text}")
-        
+
         return '250 Message accepted for delivery'
 
 if __name__ == "__main__":
