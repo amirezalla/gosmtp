@@ -1,11 +1,9 @@
 from aiosmtpd.controller import Controller
-from aiosmtpd.handlers import Message
-import requests
+from aiosmtpd.handlers import Handler
 import asyncio
-import socket
 import aiohttp
 from email import message_from_bytes
-import json
+import socket
 
 def get_local_ip_address():
     """Attempt to find the local IP address of the machine."""
@@ -17,34 +15,31 @@ def get_local_ip_address():
     except Exception:
         return 'localhost'  # Fallback to localhost
 
-class CustomHandler(Message):
-    async def handle_message(self, envelope):
+class CustomHandler(Handler):
+    async def handle_DATA(self, server, session, envelope):
         mail_from = envelope.mail_from
         rcpt_tos = envelope.rcpt_tos
-        data = envelope.content  # This is the raw email content
+        data = envelope.content  # This is the raw email content as bytes
 
         # Convert the raw email data to a Message object
         message = message_from_bytes(data)
 
         # Assuming the body is plain text for simplicity; adjust as needed for MIME/multipart
         body = message.get_payload(decode=True).decode('utf-8', errors='replace')
-
         subject = message.get('Subject', '')
 
-        # Convert to and recipients to simple lists for JSON serialization
-        recipients = list(rcpt_tos)
-
         print(f"Receiving message from: {mail_from}")
-        print(f"Message addressed to: {recipients}")
+        print(f"Message addressed to: {', '.join(rcpt_tos)}")
         print(f"Subject: {subject}")
         print(f"Body: {body}")
 
+        # Use aiohttp to send the POST request asynchronously
         async with aiohttp.ClientSession() as session:
             payload = {
                 "from": mail_from,
-                "recipients": list(rcpt_tos),
-                "message": body,  # Assume you've extracted the body as shown previously
-                "subject": subject,
+                "recipients": rcpt_tos,
+                "message": body,
+                "subject": subject
             }
             async with session.post('https://your-endpoint.example.com/api/sendEmail', json=payload) as response:
                 print(f"POST request response: {response.status}, {await response.text()}")
@@ -54,10 +49,9 @@ class CustomHandler(Message):
 if __name__ == "__main__":
     hostname = get_local_ip_address()
     port = 1025
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    loop = asyncio.get_event_loop()
     handler = CustomHandler()
-    controller = Controller(handler, hostname=hostname, port=port)
+    controller = Controller(handler, hostname=hostname, port=port, loop=loop)
     controller.start()
 
     print(f"SMTP server is running at {hostname}:{port}")
