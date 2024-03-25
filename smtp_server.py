@@ -1,70 +1,54 @@
-import asyncio
-import aiohttp
 from aiosmtpd.controller import Controller
-from aiosmtpd.smtp import Envelope, Session
+from aiosmtpd.handlers import Message
+import requests
+import asyncio
 import socket
-from email import message_from_bytes
-from email.message import EmailMessage
 
 def get_local_ip_address():
     """Attempt to find the local IP address of the machine."""
     try:
+        # Attempt to connect to a well-known remote server and read the local endpoint's IP
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.connect(("8.8.8.8", 80))  # Use Google's DNS server to find local IP
+            s.connect(("8.8.8.8", 80))  # Google's DNS server
             return s.getsockname()[0]
     except Exception:
-        return 'localhost'  # Fallback to localhost if unable to determine IP
+        return 'localhost'  # Fallback to localhost
 
-class CustomHandler:
-    async def handle_DATA(self, server, session, envelope):
-        mail_from = envelope.mail_from
-        rcpt_tos = envelope.rcpt_tos
-        data = envelope.content  # Email content in bytes
+class CustomHandler(Message):
+    def handle_message(self, message):
+        mail_from = message['from']
+        rcpt_tos = message['to']
+        subject = message['subject']
+        body = message.get_payload()
         
-        message = message_from_bytes(data)
-        subject = message.get('Subject', 'No Subject')
-        body = ''
-        
-        if message.is_multipart():
-            for part in message.walk():
-                if part.get_content_type() == 'text/plain':
-                    payload = part.get_payload(decode=True)
-                    if payload:
-                        body += payload.decode('utf-8', errors='replace')
-                    break  # Only interested in the first text/plain part
-        else:
-            payload = message.get_payload(decode=True)
-            if payload:
-                body = payload.decode('utf-8', errors='replace')
-            else:
-                body = ' [No content] '
-        
-        payload = {
+        print(f"Receiving message from: {mail_from}")
+        print(f"Message addressed to: {rcpt_tos}")
+        print(f"Subject: {subject}")
+        print(f"Body: {body}")
+
+        # Forwarding the email via a POST request
+        response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
             "from": mail_from,
-            "recipients": list(rcpt_tos),
-            "subject": subject,
+            "recipients": rcpt_tos,
             "message": body,
-        }
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload) as response:
-                print(f"POST request response: {response.status}, {await response.text()}")
-        
-        # Ensure response is in bytes
-        return b'250 Message accepted for delivery'
+            "subject": subject
+        })
 
+        print(f"POST request response: {response.status_code}, {response.text}")
+        
+        return '250 Message accepted for delivery'
 
 if __name__ == "__main__":
-    ip_address = get_local_ip_address()
+    hostname = get_local_ip_address()
     port = 1025
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
     handler = CustomHandler()
-    controller = Controller(handler, hostname=ip_address, port=port)
-
-    print(f"SMTP server is running at {ip_address}:{port}. Press Ctrl+C to shut down.")
+    controller = Controller(handler, hostname=hostname, port=port)
     controller.start()
+
+    print(f"SMTP server is running at {hostname}:{port}")
+    print("Press Ctrl+C to shut down.")
 
     try:
         loop.run_forever()
