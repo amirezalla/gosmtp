@@ -72,9 +72,9 @@ class CustomHandler(Message):
         smtp_username = 'icoa'
         smtp_password = 'Amir208079@'
 
-        if not self.authenticate_and_increment(smtp_username, smtp_password):
-            print("Authentication failed")
-            return '535 Authentication failed'
+        # if not self.authenticate_and_increment(smtp_username, smtp_password):
+        #     print("Authentication failed")
+        #     return '535 Authentication failed'
 
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
