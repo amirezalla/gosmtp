@@ -6,6 +6,8 @@ import socket
 import re
 import psycopg2
 import os
+from email.message import EmailMessage
+
 
 def get_local_ip_address():
     """Attempt to find the local IP address of the machine."""
@@ -17,7 +19,11 @@ def get_local_ip_address():
         return 'localhost'
 
 class CustomHandler(Message):
-    def __init__(self):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message_class = EmailMessage
+
+
         self.db_host = os.getenv('DB_HOST')
         self.db_username = os.getenv('DB_USERNAME')
         self.db_password = os.getenv('DB_PASSWORD')
