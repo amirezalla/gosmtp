@@ -19,7 +19,7 @@ class CustomHandler(Message):
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
-        body = message.get_payload()
+        body = message.get_payload(decode=True)
         
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
@@ -30,7 +30,7 @@ class CustomHandler(Message):
         response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
             "from": mail_from,
             "recipients": rcpt_tos,
-            "message": body,
+            "message": body.decode('utf-8'),
             "subject": subject
         })
 
