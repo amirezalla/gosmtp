@@ -3,6 +3,8 @@ from aiosmtpd.handlers import Message
 import requests
 import asyncio
 import socket
+import re
+
 
 def get_local_ip_address():
     """Attempt to find the local IP address of the machine."""
@@ -47,9 +49,17 @@ class CustomHandler(Message):
         print(f"Subject: {subject}")
         print(f"Body: {body}")
 
+        match = re.match(r'(?P<name>.+?)\s*<(?P<email>\S+@\S+)>', mail_from)
+        if match:
+            name = match.group('name')
+            from_email = match.group('email')
+        else:
+            name = ''
+            from_email = mail_from
         # Forwarding the email via a POST request
         response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
-            "from": mail_from,
+            "from": from_email,  # Use the extracted email
+            "name": name,  # Optionally, include the name if your API supports it
             "recipients": rcpt_tos,
             "message": body,
             "subject": subject
