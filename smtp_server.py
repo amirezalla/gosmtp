@@ -31,14 +31,16 @@ class CustomHandler(Message):
             return "\n".join(parts)
         else:
             # For singlepart messages, directly return the decoded payload
-            return message.get_payload(decode=True)
+            payload = message.get_payload(decode=True)
+            # Check if the payload is bytes and decode it; if it's str, use it as is
+            return payload.decode('utf-8') if isinstance(payload, bytes) else payload
+        
     
     def handle_message(self, message):
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
-        body_bytes = self.extract_body(message)
-        body = body_bytes.decode('utf-8') if body_bytes is not None else ''
+        body = self.extract_body(message)
 
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
