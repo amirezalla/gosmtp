@@ -19,12 +19,18 @@ class CustomHandler(Message):
     def extract_body(self, message):
         """Extracts the email body from a message object, handling both singlepart and multipart messages."""
         if message.is_multipart():
-            # For multipart messages, get the payload for each part
-            parts = [self.extract_body(part) for part in message.get_payload()]
-            # Join the parts or handle them as needed (this example assumes you want plain text parts)
-            return "\n".join(part for part in parts if part is not None)
+            # Initialize an empty list to hold the decoded parts
+            parts = []
+            for part in message.get_payload():
+                # Recursively extract and decode each part
+                part_payload = self.extract_body(part)
+                if part_payload is not None:
+                    # Ensure the part is decoded to a string before adding it to the list
+                    parts.append(part_payload.decode('utf-8') if isinstance(part_payload, bytes) else part_payload)
+            # Join the decoded parts with a newline (or other delimiter as needed)
+            return "\n".join(parts)
         else:
-            # For singlepart messages, just get the payload
+            # For singlepart messages, directly return the decoded payload
             return message.get_payload(decode=True)
     
     def handle_message(self, message):
