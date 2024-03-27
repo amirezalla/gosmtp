@@ -4,6 +4,9 @@ import requests
 import asyncio
 import socket
 import re
+import psycopg2
+import os
+
 
 
 def get_local_ip_address():
@@ -17,6 +20,38 @@ def get_local_ip_address():
         return 'localhost'  # Fallback to localhost
 
 class CustomHandler(Message):
+    def __init__(self):
+        # Database connection parameters should be retrieved from environment variables for security
+        self.db_host = os.getenv('DB_HOST')
+        self.db_username = os.getenv('DB_USERNAME')
+        self.db_password = os.getenv('DB_PASSWORD')
+        self.db_name = os.getenv('DB_NAME')  # The name of the database
+
+    def create_db_connection(self):
+        # Establish a connection to the database
+        return psycopg2.connect(
+            host=self.db_host,
+            user=self.db_username,
+            password=self.db_password,
+            dbname=self.db_name
+        )
+    
+    def authenticate_and_increment(self, username, password):
+        conn = self.create_db_connection()
+        cursor = conn.cursor()
+
+        # Check if the username and password exist in the database
+        cursor.execute("SELECT id FROM users WHERE username=? AND password=?", (username, password))
+        user = cursor.fetchone()
+
+        if user:
+            # User is authenticated, increment the usage counter
+            cursor.execute("UPDATE users SET usage = usage + 1 WHERE id=?", (user[0],))
+            conn.commit()
+            return True
+        else:
+            # Authentication failed
+            return False
 
     def extract_body(self, message):
         """Extracts the email body from a message object, handling both singlepart and multipart messages."""
@@ -44,6 +79,14 @@ class CustomHandler(Message):
         subject = message['subject']
         body = self.extract_body(message)
 
+        smtp_username = 'icoa'
+        smtp_password = 'Amir208079@'
+
+        # Authenticate and increment usage
+        if not self.authenticate_and_increment(smtp_username, smtp_password):
+            print("Authentication failed")
+            return '535 Authentication failed'
+
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
         print(f"Subject: {subject}")
@@ -70,6 +113,13 @@ class CustomHandler(Message):
         return '250 Message accepted for delivery'
 
 if __name__ == "__main__":
+
+
+    os.environ.setdefault('DB_HOST', '34.77.161.76')
+    os.environ.setdefault('DB_USERNAME', 'root')
+    os.environ.setdefault('DB_PASSWORD', 'Amir208079@')
+    os.environ.setdefault('DB_NAME', 'sendgrid')
+    
     hostname = get_local_ip_address()
     port = 1025
     loop = asyncio.new_event_loop()
