@@ -44,12 +44,12 @@ class CustomHandler(Message):
             conn = self.create_db_connection()
             cursor = conn.cursor()
             # Adjusted the query for MySQL
-            cursor.execute("SELECT id FROM users WHERE username=%s AND password=%s", (username, password))
+            cursor.execute("SELECT id FROM smtp WHERE username=%s AND password=%s", (username, password))
             user = cursor.fetchone()
 
             if user:
                 # Increment usage
-                cursor.execute("UPDATE users SET usage = usage + 1 WHERE id=%s", (user[0],))
+                cursor.execute("UPDATE smtp SET usage = usage + 1 WHERE id=%s", (user[0],))
                 conn.commit()
                 return True
         except mysql.connector.Error as err:
