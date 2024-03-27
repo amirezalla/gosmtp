@@ -4,7 +4,7 @@ import requests
 import asyncio
 import socket
 import re
-import psycopg2
+import mysql.connector
 import os
 from email.message import EmailMessage
 
@@ -30,30 +30,35 @@ class CustomHandler(Message):
         self.db_name = os.getenv('DB_NAME')
 
     def create_db_connection(self):
-        return psycopg2.connect(
+        """Establishes a connection to the MySQL database."""
+        return mysql.connector.connect(
             host=self.db_host,
             user=self.db_username,
-            password=self.db_password,
-            dbname=self.db_name
+            passwd=self.db_password,
+            database=self.db_name
         )
 
     def authenticate_and_increment(self, username, password):
-        with self.create_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT id FROM users WHERE username=%s AND password=%s",
-                    (username, password)
-                )
-                user = cursor.fetchone()
+        """Authenticates the user and increments usage counter."""
+        try:
+            conn = self.create_db_connection()
+            cursor = conn.cursor()
+            # Adjusted the query for MySQL
+            cursor.execute("SELECT id FROM users WHERE username=%s AND password=%s", (username, password))
+            user = cursor.fetchone()
 
-                if user:
-                    cursor.execute(
-                        "UPDATE users SET usage = usage + 1 WHERE id=%s",
-                        (user[0],)
-                    )
-                    conn.commit()
-                    return True
+            if user:
+                # Increment usage
+                cursor.execute("UPDATE users SET usage = usage + 1 WHERE id=%s", (user[0],))
+                conn.commit()
+                return True
+        except mysql.connector.Error as err:
+            print(f"Database error: {err}")
+        finally:
+            if conn.is_connected():
+                conn.close()
         return False
+            
 
     def extract_body(self, message):
         if message.is_multipart():
