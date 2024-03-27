@@ -49,7 +49,7 @@ class CustomHandler(Message):
 
             if user:
                 # Increment usage
-                cursor.execute("UPDATE smtp SET usage = usage + 1 WHERE id=%s", (user[0],))
+                cursor.execute("UPDATE smtp SET `usage` = `usage` + 1 WHERE id = %s", (user[0],))
                 conn.commit()
                 return True
         except mysql.connector.Error as err:
