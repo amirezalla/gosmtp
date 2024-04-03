@@ -1,5 +1,6 @@
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import Message
+from aiosmtpd.smtp import AuthResult, LoginPassword
 import requests
 import asyncio
 import socket
@@ -28,6 +29,22 @@ class CustomHandler(Message):
         self.db_username = os.getenv('DB_USERNAME')
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
+
+    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
+        if mechanism != "LOGIN":
+            return AuthResult(success=False, handled=False)
+        
+        # Decode LOGIN payload to username and password
+        if isinstance(auth_data, LoginPassword):
+            username = auth_data.login.decode()
+            password = auth_data.password.decode()
+        else:
+            return AuthResult(success=False, message="535 Authentication failed.")
+
+        if self.authenticate_and_increment(username, password):
+            return AuthResult(success=True)
+        else:
+            return AuthResult(success=False, message="535 Authentication failed.")
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
@@ -74,12 +91,12 @@ class CustomHandler(Message):
         subject = message['subject']
         body = self.extract_body(message)
 
-        smtp_username = 'icoa'
-        smtp_password = 'Amir208079@'
+        # smtp_username = 'icoa'
+        # smtp_password = 'Amir208079@'
 
-        if not self.authenticate_and_increment(smtp_username, smtp_password):
-            print("Authentication failed")
-            return '535 Authentication failed'
+        # if not self.authenticate_and_increment(smtp_username, smtp_password):
+        #     print("Authentication failed")
+        #     return '535 Authentication failed'
 
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
@@ -107,24 +124,27 @@ class CustomHandler(Message):
         return '250 Message accepted for delivery'
 
 if __name__ == "__main__":
-    # For demonstration purposes; replace with secure configuration handling in production
+    # For demonstration purposes; replace with secure configuration handling in production  ----587
     os.environ['DB_HOST'] = '34.77.161.76'
     os.environ['DB_USERNAME'] = 'root'
     os.environ['DB_PASSWORD'] = 'Amir208079@'
     os.environ['DB_NAME'] = 'sendgrid'
 
     hostname = get_local_ip_address()
-    port = 1025
+    ports = [1025,587]
+    controllers = []
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    handler = CustomHandler()
-    controller = Controller(handler, hostname=hostname, port=port)
-    controller.start()
-
-    print(f"SMTP server is running at {hostname}:{port}")
+    for port in ports:
+        
+        handler = CustomHandler()
+        controller = Controller(handler, hostname=hostname, port=port) 
+        controller.start()
+        print(f"SMTP server is running at {hostname}:{port}")
     try:
         loop.run_forever()
     except KeyboardInterrupt:
         print("Shutting down.")
     finally:
-        controller.stop()
+        for controller in controllers:
+            controller.stop()
