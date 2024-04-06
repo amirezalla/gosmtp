@@ -31,8 +31,7 @@ class CustomHandler(Message):
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
 
-    async def handle_AUTH(self,auth_data):
-        print(auth_data)
+    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
         
         # Decode LOGIN payload to username and password
         if isinstance(auth_data, LoginPassword):
