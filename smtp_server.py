@@ -23,7 +23,7 @@ class CustomHandler(Message):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message_class = EmailMessage
-
+        self.authenticated_user = None
 
         self.db_host = os.getenv('DB_HOST')
         self.db_username = os.getenv('DB_USERNAME')
