@@ -1,6 +1,6 @@
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import Message
-from aiosmtpd.smtp import SMTP, AuthResult, LoginPassword
+from aiosmtpd.smtp import AuthResult, LoginPassword
 import requests
 import asyncio
 import socket
@@ -19,21 +19,32 @@ def get_local_ip_address():
     except Exception:
         return 'localhost'
 
-        
-
 class CustomHandler(Message):
-
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message_class = EmailMessage
-        self.authenticated_user = None
-        self.server=None
+
 
         self.db_host = os.getenv('DB_HOST')
         self.db_username = os.getenv('DB_USERNAME')
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
 
+    # async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
+    #     if mechanism != "LOGIN":
+    #         return AuthResult(success=False, handled=False)
+        
+    #     # Decode LOGIN payload to username and password
+    #     if isinstance(auth_data, LoginPassword):
+    #         username = auth_data.login.decode()
+    #         password = auth_data.password.decode()
+    #     else:
+    #         return AuthResult(success=False, message="535 Authentication failed.")
+
+    #     if self.authenticate_and_increment(username, password):
+    #         return AuthResult(success=True)
+    #     else:
+    #         return AuthResult(success=False, message="535 Authentication failed.")
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
@@ -57,7 +68,7 @@ class CustomHandler(Message):
                 # Increment usage
                 cursor.execute("UPDATE smtp SET `usage` = `usage` + 1 WHERE id = %s", (user[0],))
                 conn.commit()
-                return user
+                return True
         except mysql.connector.Error as err:
             print(f"Database error: {err}")
         finally:
@@ -74,12 +85,12 @@ class CustomHandler(Message):
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
-    async def handle_message(self,message):
-
+    def handle_message(self, message):
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
         body = self.extract_body(message)
+
 
 
         print(f"Receiving message from: {mail_from}")
