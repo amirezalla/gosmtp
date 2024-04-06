@@ -20,12 +20,6 @@ def get_local_ip_address():
         return 'localhost'
 
 class CustomSMTP(SMTP):
-    def __init__(self,*args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.message_class = EmailMessage
-        self.authenticated_user = None
-
-
     async def smtp_AUTH(self, arg):
         mechanism, credentials = arg.split(' ', 1)
         if mechanism.upper() == 'LOGIN':
@@ -34,20 +28,12 @@ class CustomSMTP(SMTP):
             username = username.strip().decode('utf-8')
             password = password.strip().decode('utf-8')
             
-            # Here, instead of calling authenticate_and_increment (which doesn't exist in this scope),
-            # you'd verify credentials directly or through a shared function/resource.
-            is_authenticated = self.verify_credentials(username, password)  # Implement this
-            
-            if is_authenticated:
-                session_id = self.session.peer[1]  # Example: using peer's port as unique identifier
-                self.authenticated_user = username  # Store authenticated username
-                return AuthResult(success=True)
-        return await super().smtp_AUTH(arg)
-    
-    # Placeholder for the actual verification logic
-    def verify_credentials(self, username, password):
-        print(username,password)
-        return True  # Simplified to always return True
+            # Implement your authentication check here
+            # For demonstration, assuming authentication always succeeds
+            print(f"Authenticating: {username}")
+            # If authentication succeeds:
+            self.session.authenticated = True
+            return AuthResult(success=True)
 
 
 class CustomHandler(Message):
@@ -102,8 +88,10 @@ class CustomHandler(Message):
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
-    def handle_message(self, message):
-
+    def handle_message(self, server, session, message):
+        if not getattr(session, 'authenticated', False):
+            print("Rejecting unauthenticated message.")
+            return '535 Authentication required'
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
@@ -155,8 +143,7 @@ if __name__ == "__main__":
     asyncio.set_event_loop(loop)
     for port in ports:
         handler = CustomHandler()
-        smtp=CustomSMTP(SMTP)
-        controller = Controller(handler, hostname=hostname, port=port,server_class=smtp) 
+        controller = Controller(handler, hostname=hostname, port=port,server_class=CustomSMTP) 
         controller.start()
         print(f"SMTP server is running at {hostname}:{port}")
     try:
