@@ -95,7 +95,7 @@ class CustomHandler(Message):
 
         # smtp_username = 'icoa'
         # smtp_password = 'Amir208079@'
-
+        return self.authenticated_user
         if not self.authenticated_user:
             print("No authenticated user.")
             return '535 Authentication failed'
