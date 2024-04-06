@@ -41,7 +41,9 @@ class CustomHandler(Message):
         else:
             return AuthResult(success=False, message="535 Authentication failed.")
 
-        if self.authenticate_and_increment(username, password):
+        user_info = self.authenticate_and_increment(username, password)
+        if user_info:
+            self.authenticated_user = user_info  # Store user info on successful auth
             return AuthResult(success=True)
         else:
             return AuthResult(success=False, message="535 Authentication failed.")
@@ -94,9 +96,9 @@ class CustomHandler(Message):
         # smtp_username = 'icoa'
         # smtp_password = 'Amir208079@'
 
-        # if not self.authenticate_and_increment(smtp_username, smtp_password):
-        #     print("Authentication failed")
-        #     return '535 Authentication failed'
+        if not self.authenticated_user:
+            print("No authenticated user.")
+            return '535 Authentication failed'
 
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
