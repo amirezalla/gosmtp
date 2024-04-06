@@ -20,26 +20,34 @@ def get_local_ip_address():
         return 'localhost'
 
 class CustomSMTP(SMTP):
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message_class = EmailMessage
+        self.authenticated_user = None
+
+
     async def smtp_AUTH(self, arg):
-        # Decode the AUTH command argument to get the mechanism and encoded credentials
         mechanism, credentials = arg.split(' ', 1)
         if mechanism.upper() == 'LOGIN':
-            # For simplicity, assuming LOGIN mechanism with Base64 encoded credentials
             username = await self._reader.readline()
             password = await self._reader.readline()
-            # Decode the Base64 encoded credentials
             username = username.strip().decode('utf-8')
             password = password.strip().decode('utf-8')
-            user_info = self.authenticate_and_increment(username, password)
-            # Important: Ensure secure handling of credentials
-            self.authenticated_user = user_info  # Store user info on successful auth
-
-
-            # After handling credentials, proceed with original AUTH logic
-            # This example simply returns a successful AuthResult for demonstration purposes
-            return AuthResult(success=True)
-        # If not handling other mechanisms, call the superclass method
+            
+            # Here, instead of calling authenticate_and_increment (which doesn't exist in this scope),
+            # you'd verify credentials directly or through a shared function/resource.
+            is_authenticated = self.verify_credentials(username, password)  # Implement this
+            
+            if is_authenticated:
+                session_id = self.session.peer[1]  # Example: using peer's port as unique identifier
+                self.authenticated_user = username  # Store authenticated username
+                return AuthResult(success=True)
         return await super().smtp_AUTH(arg)
+    
+    # Placeholder for the actual verification logic
+    def verify_credentials(self, username, password):
+        print(username,password)
+        return True  # Simplified to always return True
 
 
 class CustomHandler(Message):
