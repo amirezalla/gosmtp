@@ -6,6 +6,7 @@ import asyncio
 import socket
 import re
 import mysql.connector
+import base64
 import os
 from email.message import EmailMessage
 
@@ -21,7 +22,27 @@ def get_local_ip_address():
 
     
 
+class CustomSMTPHandler(Message):
 
+    def factory(self):
+        """Return a new instance of the custom SMTP class on each call."""
+        return SMTP(self.handler)
+    
+    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
+        if mechanism != 'LOGIN':
+            return AuthResult(success=False, handled=False)
+
+        # Decode the credentials
+        username = base64.b64decode(auth_data.login).decode()
+        password = base64.b64decode(auth_data.password).decode()
+
+        # Log or use the credentials here for your custom authentication
+        print(f"Username: {username}, Password: {password}")
+
+        # Implement your authentication logic here
+        # For demonstration, we're assuming authentication always succeeds
+        return AuthResult(success=True)
+    
 class CustomHandler(Message,SMTP):
 
     
