@@ -19,7 +19,25 @@ def get_local_ip_address():
     except Exception:
         return 'localhost'
 
-class CustomSMTP(SMTP):
+    
+
+
+class CustomHandler(Message,SMTP):
+
+    
+        
+
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.message_class = EmailMessage
+        self.authenticated_user = None
+        self.server=None
+
+        self.db_host = os.getenv('DB_HOST')
+        self.db_username = os.getenv('DB_USERNAME')
+        self.db_password = os.getenv('DB_PASSWORD')
+        self.db_name = os.getenv('DB_NAME')
+
     async def smtp_AUTH(self, arg):
         mechanism, credentials = arg.split(' ', 1)
         if mechanism.upper() == 'LOGIN':
@@ -34,19 +52,6 @@ class CustomSMTP(SMTP):
             # If authentication succeeds:
             self.session.authenticated = True
             return AuthResult(success=True)
-
-
-class CustomHandler(Message):
-    def __init__(self,*args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.message_class = EmailMessage
-        self.authenticated_user = None
-        self.server=None
-
-        self.db_host = os.getenv('DB_HOST')
-        self.db_username = os.getenv('DB_USERNAME')
-        self.db_password = os.getenv('DB_PASSWORD')
-        self.db_name = os.getenv('DB_NAME')
 
 
     def create_db_connection(self):
@@ -140,7 +145,7 @@ if __name__ == "__main__":
     port = 1025  # Example port
 
     handler = CustomHandler()
-    controller = Controller(handler, hostname=hostname, port=port, server_class=SMTP)
+    controller = Controller(handler, hostname=hostname, port=port)
     controller.start()
 
     try:
