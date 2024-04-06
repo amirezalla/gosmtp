@@ -74,7 +74,7 @@ class CustomHandler(Message):
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
-    async def handle_DATA(self, server, session, message):
+    async def handle_message(self,message):
 
         mail_from = message['from']
         rcpt_tos = message['to']
