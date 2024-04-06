@@ -140,7 +140,7 @@ if __name__ == "__main__":
     port = 1025  # Example port
 
     handler = CustomHandler()
-    controller = Controller(handler, hostname=hostname, port=port, server_class=CustomSMTP)
+    controller = Controller(handler, hostname=hostname, port=port, server_class=SMTP)
     controller.start()
 
     try:
