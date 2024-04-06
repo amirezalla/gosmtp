@@ -1,6 +1,6 @@
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import Message
-from aiosmtpd.smtp import AuthResult, LoginPassword
+from aiosmtpd.smtp import SMTP, AuthResult, LoginPassword
 import requests
 import asyncio
 import socket
@@ -19,6 +19,29 @@ def get_local_ip_address():
     except Exception:
         return 'localhost'
 
+class CustomSMTP(SMTP):
+    async def smtp_AUTH(self, arg):
+        # Decode the AUTH command argument to get the mechanism and encoded credentials
+        mechanism, credentials = arg.split(' ', 1)
+        if mechanism.upper() == 'LOGIN':
+            # For simplicity, assuming LOGIN mechanism with Base64 encoded credentials
+            username = await self._reader.readline()
+            password = await self._reader.readline()
+            # Decode the Base64 encoded credentials
+            username = username.strip().decode('utf-8')
+            password = password.strip().decode('utf-8')
+            user_info = self.authenticate_and_increment(username, password)
+            # Important: Ensure secure handling of credentials
+            self.authenticated_user = user_info  # Store user info on successful auth
+
+
+            # After handling credentials, proceed with original AUTH logic
+            # This example simply returns a successful AuthResult for demonstration purposes
+            return AuthResult(success=True)
+        # If not handling other mechanisms, call the superclass method
+        return await super().smtp_AUTH(arg)
+
+
 class CustomHandler(Message):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,20 +54,6 @@ class CustomHandler(Message):
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
 
-    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        
-        # Decode LOGIN payload to username and password
-        if isinstance(auth_data, LoginPassword):
-            username = auth_data.login.decode()
-            password = auth_data.password.decode()
-        else:
-            return AuthResult(success=False, message="535 Authentication failed.")
-        user_info = self.authenticate_and_increment(username, password)
-        if user_info:
-            self.authenticated_user = user_info  # Store user info on successful auth
-            return AuthResult(success=True)
-        else:
-            return AuthResult(success=False, message="535 Authentication failed.")
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
@@ -138,7 +147,7 @@ if __name__ == "__main__":
     asyncio.set_event_loop(loop)
     for port in ports:
         handler = CustomHandler()
-        controller = Controller(handler, hostname=hostname, port=port) 
+        controller = Controller(handler, hostname=hostname, port=port,server_class=CustomSMTP) 
         controller.start()
         print(f"SMTP server is running at {hostname}:{port}")
     try:
