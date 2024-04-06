@@ -31,6 +31,7 @@ class CustomHandler(Message):
         self.db_name = os.getenv('DB_NAME')
 
     async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
+        return server
         if mechanism != "LOGIN":
             return AuthResult(success=False, handled=False)
         
@@ -40,8 +41,6 @@ class CustomHandler(Message):
             password = auth_data.password.decode()
         else:
             return AuthResult(success=False, message="535 Authentication failed.")
-        self.authenticated_user = [username,password]
-        return self.authenticated_user
         user_info = self.authenticate_and_increment(username, password)
         if user_info:
             self.authenticated_user = user_info  # Store user info on successful auth
