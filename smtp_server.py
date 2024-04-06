@@ -155,7 +155,8 @@ if __name__ == "__main__":
     asyncio.set_event_loop(loop)
     for port in ports:
         handler = CustomHandler()
-        controller = Controller(handler, hostname=hostname, port=port,server_class=CustomSMTP) 
+        smtp=CustomSMTP()
+        controller = Controller(handler, hostname=hostname, port=port,server_class=smtp) 
         controller.start()
         print(f"SMTP server is running at {hostname}:{port}")
     try:
