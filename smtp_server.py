@@ -24,6 +24,7 @@ class CustomHandler(Message):
         super().__init__(*args, **kwargs)
         self.message_class = EmailMessage
         self.authenticated_user = None
+        self.server=None
 
         self.db_host = os.getenv('DB_HOST')
         self.db_username = os.getenv('DB_USERNAME')
@@ -31,7 +32,8 @@ class CustomHandler(Message):
         self.db_name = os.getenv('DB_NAME')
 
     async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        return server
+        self.server
+        return self.server
         if mechanism != "LOGIN":
             return AuthResult(success=False, handled=False)
         
@@ -95,7 +97,7 @@ class CustomHandler(Message):
 
         # smtp_username = 'icoa'
         # smtp_password = 'Amir208079@'
-        print(self.authenticated_user)
+        print(self.server)
         if not self.authenticated_user:
             print("No authenticated user.")
             return '535 Authentication failed'
