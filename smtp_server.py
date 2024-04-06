@@ -88,9 +88,8 @@ class CustomHandler(Message):
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
-    def handle_message(self, message, server, session, envelope, mechanism, auth_data):
-        self.server = [self, server, session, envelope, mechanism, auth_data]
-        print("self.server set:", self.server)  # Diagnostic print
+    def handle_message(self, message):
+
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
