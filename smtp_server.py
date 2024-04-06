@@ -40,7 +40,8 @@ class CustomHandler(Message):
             password = auth_data.password.decode()
         else:
             return AuthResult(success=False, message="535 Authentication failed.")
-        return [username,password]
+        self.authenticated_user = [username,password]
+        return self.authenticated_user
         user_info = self.authenticate_and_increment(username, password)
         if user_info:
             self.authenticated_user = user_info  # Store user info on successful auth
@@ -95,7 +96,7 @@ class CustomHandler(Message):
 
         # smtp_username = 'icoa'
         # smtp_password = 'Amir208079@'
-        print
+        print(self.authenticated_user)
         if not self.authenticated_user:
             print("No authenticated user.")
             return '535 Authentication failed'
