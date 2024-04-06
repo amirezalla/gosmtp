@@ -21,31 +21,23 @@ def get_local_ip_address():
         return 'localhost'
 
     
-
-class CustomSMTPHandler(Message):
-
-    def factory(self):
-        """Return a new instance of the custom SMTP class on each call."""
-        return SMTP(self.handler)
-    
+class CustomSMTP(SMTP):
     async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        if mechanism != 'LOGIN':
+        if mechanism == 'LOGIN':
+            # LOGIN mechanism means auth_data is instance of LoginPassword
+            username = auth_data.login.decode()
+            password = auth_data.password.decode()
+
+            print(f"Username: {username}, Password: {password}")
+            # Here you can add your logic to authenticate against your database
+            # For demonstration, assuming authentication always succeeds
+            return AuthResult(success=True)
+        else:
             return AuthResult(success=False, handled=False)
+        
 
-        # Decode the credentials
-        username = base64.b64decode(auth_data.login).decode()
-        password = base64.b64decode(auth_data.password).decode()
+class CustomHandler(Message):
 
-        # Log or use the credentials here for your custom authentication
-        print(f"Username: {username}, Password: {password}")
-
-        # Implement your authentication logic here
-        # For demonstration, we're assuming authentication always succeeds
-        return AuthResult(success=True)
-    
-class CustomHandler(Message,SMTP):
-
-    
         
 
     def __init__(self,*args, **kwargs):
@@ -114,10 +106,8 @@ class CustomHandler(Message,SMTP):
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
-    def handle_message(self, server, session, message):
-        if not getattr(session, 'authenticated', False):
-            print("Rejecting unauthenticated message.")
-            return '535 Authentication required'
+    async def handle_DATA(self, server, session, message):
+
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
