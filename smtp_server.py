@@ -32,10 +32,6 @@ class CustomHandler(Message):
         self.db_name = os.getenv('DB_NAME')
 
     async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        print("handle_AUTH called")  # Diagnostic print
-        self.server = [self, server, session, envelope, mechanism, auth_data]
-        print("self.server set:", self.server)  # Diagnostic print
-        return self.server
         if mechanism != "LOGIN":
             return AuthResult(success=False, handled=False)
         
@@ -83,7 +79,10 @@ class CustomHandler(Message):
         return False
             
 
-    def extract_body(self, message):
+    def extract_body(self,server, session, envelope, mechanism, auth_data, message):
+        self.server = [self, server, session, envelope, mechanism, auth_data]
+        print("self.server set:", self.server)  # Diagnostic print
+        return self.server
         if message.is_multipart():
             parts = [self.extract_body(part) for part in message.get_payload()]
             return "\n".join(filter(None, parts))
