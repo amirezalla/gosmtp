@@ -131,12 +131,11 @@ if __name__ == "__main__":
     os.environ['DB_NAME'] = 'sendgrid'
 
     hostname = get_local_ip_address()
-    ports = [1025,587]
+    ports = [1025]
     controllers = []
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     for port in ports:
-        
         handler = CustomHandler()
         controller = Controller(handler, hostname=hostname, port=port) 
         controller.start()
