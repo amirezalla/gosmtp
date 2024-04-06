@@ -80,7 +80,7 @@ class CustomHandler(Message):
         return False
             
 
-    def extract_body(self,server, session, envelope, mechanism, auth_data, message):
+    def extract_body(self, message):
         if message.is_multipart():
             parts = [self.extract_body(part) for part in message.get_payload()]
             return "\n".join(filter(None, parts))
