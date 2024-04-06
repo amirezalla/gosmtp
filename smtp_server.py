@@ -40,7 +40,7 @@ class CustomHandler(Message):
             password = auth_data.password.decode()
         else:
             return AuthResult(success=False, message="535 Authentication failed.")
-
+        return [username,password]
         user_info = self.authenticate_and_increment(username, password)
         if user_info:
             self.authenticated_user = user_info  # Store user info on successful auth
@@ -70,7 +70,7 @@ class CustomHandler(Message):
                 # Increment usage
                 cursor.execute("UPDATE smtp SET `usage` = `usage` + 1 WHERE id = %s", (user[0],))
                 conn.commit()
-                return True
+                return user
         except mysql.connector.Error as err:
             print(f"Database error: {err}")
         finally:
@@ -95,7 +95,7 @@ class CustomHandler(Message):
 
         # smtp_username = 'icoa'
         # smtp_password = 'Amir208079@'
-        return self
+        print
         if not self.authenticated_user:
             print("No authenticated user.")
             return '535 Authentication failed'
