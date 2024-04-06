@@ -135,22 +135,26 @@ class CustomHandler(Message,SMTP):
         return '250 Message accepted for delivery'
 
 if __name__ == "__main__":
-    # Set environment variables for DB access
+    # For demonstration purposes; replace with secure configuration handling in production  ----587
     os.environ['DB_HOST'] = '34.77.161.76'
     os.environ['DB_USERNAME'] = 'root'
     os.environ['DB_PASSWORD'] = 'Amir208079@'
     os.environ['DB_NAME'] = 'sendgrid'
 
     hostname = get_local_ip_address()
-    port = 1025  # Example port
-
-    handler = CustomHandler()
-    controller = Controller(handler, hostname=hostname, port=port)
-    controller.start()
-
+    ports = [1025]
+    controllers = []
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    for port in ports:
+        handler = CustomHandler()
+        controller = Controller(handler, hostname=hostname, port=port) 
+        controller.start()
+        print(f"SMTP server is running at {hostname}:{port}")
     try:
-        asyncio.get_event_loop().run_forever()
+        loop.run_forever()
     except KeyboardInterrupt:
-        print("Server stopping")
-        controller.stop()
-
+        print("Shutting down.")
+    finally:
+        for controller in controllers:
+            controller.stop()
