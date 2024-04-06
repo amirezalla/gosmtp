@@ -32,7 +32,9 @@ class CustomHandler(Message):
         self.db_name = os.getenv('DB_NAME')
 
     async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        self.server=[self, server, session, envelope, mechanism, auth_data]
+        print("handle_AUTH called")  # Diagnostic print
+        self.server = [self, server, session, envelope, mechanism, auth_data]
+        print("self.server set:", self.server)  # Diagnostic print
         return self.server
         if mechanism != "LOGIN":
             return AuthResult(success=False, handled=False)
