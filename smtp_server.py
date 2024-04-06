@@ -32,6 +32,7 @@ class CustomHandler(Message):
         self.db_name = os.getenv('DB_NAME')
 
     async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
+
         if mechanism != "LOGIN":
             return AuthResult(success=False, handled=False)
         
@@ -80,9 +81,6 @@ class CustomHandler(Message):
             
 
     def extract_body(self,server, session, envelope, mechanism, auth_data, message):
-        self.server = [self, server, session, envelope, mechanism, auth_data]
-        print("self.server set:", self.server)  # Diagnostic print
-        return self.server
         if message.is_multipart():
             parts = [self.extract_body(part) for part in message.get_payload()]
             return "\n".join(filter(None, parts))
@@ -90,7 +88,9 @@ class CustomHandler(Message):
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
-    def handle_message(self, message):
+    def handle_message(self, message, server, session, envelope, mechanism, auth_data):
+        self.server = [self, server, session, envelope, mechanism, auth_data]
+        print("self.server set:", self.server)  # Diagnostic print
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
