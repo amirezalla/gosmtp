@@ -6,7 +6,6 @@ import asyncio
 import socket
 import re
 import mysql.connector
-import base64
 import os
 from email.message import EmailMessage
 
@@ -20,25 +19,9 @@ def get_local_ip_address():
     except Exception:
         return 'localhost'
 
-    
-class CustomSMTP(SMTP):
-    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        if mechanism == 'LOGIN':
-            # LOGIN mechanism means auth_data is instance of LoginPassword
-            username = auth_data.login.decode()
-            password = auth_data.password.decode()
-
-            print(f"Username: {username}, Password: {password}")
-            # Here you can add your logic to authenticate against your database
-            # For demonstration, assuming authentication always succeeds
-            return AuthResult(success=True)
-        else:
-            return AuthResult(success=False, handled=False)
         
 
 class CustomHandler(Message):
-
-        
 
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,21 +33,6 @@ class CustomHandler(Message):
         self.db_username = os.getenv('DB_USERNAME')
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
-
-    async def smtp_AUTH(self, arg):
-        mechanism, credentials = arg.split(' ', 1)
-        if mechanism.upper() == 'LOGIN':
-            username = await self._reader.readline()
-            password = await self._reader.readline()
-            username = username.strip().decode('utf-8')
-            password = password.strip().decode('utf-8')
-            
-            # Implement your authentication check here
-            # For demonstration, assuming authentication always succeeds
-            print(f"Authenticating: {username}")
-            # If authentication succeeds:
-            self.session.authenticated = True
-            return AuthResult(success=True)
 
 
     def create_db_connection(self):
@@ -113,12 +81,6 @@ class CustomHandler(Message):
         subject = message['subject']
         body = self.extract_body(message)
 
-        # smtp_username = 'icoa'
-        # smtp_password = 'Amir208079@'
-        print('server',self.server)
-        if not self.authenticated_user:
-            print("No authenticated user.")
-            return '535 Authentication failed'
 
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
