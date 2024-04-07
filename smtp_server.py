@@ -8,6 +8,8 @@ import re
 import mysql.connector
 import os
 from email.message import EmailMessage
+from email.policy import EmailPolicy
+
 
 
 def get_local_ip_address():
@@ -70,8 +72,8 @@ class CustomHandler(Message):
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
     def handle_message(self, message):
-
-        print(f"Received message details: {message}")
+        mss=message.as_string(policy=EmailPolicy(utf8=True))
+        print(f"Received message details: {mss}")
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
