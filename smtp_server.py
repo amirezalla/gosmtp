@@ -49,7 +49,7 @@ class CustomHandler(Message):
             conn = self.create_db_connection()
             cursor = conn.cursor()
             # Adjusted the query for MySQL
-            cursor.execute("SELECT id FROM smtp WHERE username=%s AND password=%s", (username, password))
+            cursor.execute("SELECT id FROM smtp WHERE username=%s", (username))
             user = cursor.fetchone()
 
             if user:
