@@ -43,7 +43,7 @@ class CustomHandler(Message):
             database=self.db_name
         )
 
-    def authenticate_and_increment(self, username, password):
+    def authenticate_and_increment(self, username):
         """Authenticates the user and increments usage counter."""
         try:
             conn = self.create_db_connection()
