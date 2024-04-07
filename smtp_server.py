@@ -26,6 +26,8 @@ class CustomHandler(Message):
         super().__init__(*args, **kwargs)
         self.message_class = EmailMessage
 
+        self.smtp_username = None
+        self.smtp_password = None
 
         self.db_host = os.getenv('DB_HOST')
         self.db_username = os.getenv('DB_USERNAME')
@@ -72,6 +74,12 @@ class CustomHandler(Message):
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
     def handle_message(self, message):
+         # Attempt to print the stored SMTP username and password
+        try:
+            print(f"SMTP username: {self.smtp_username}, SMTP password: {self.smtp_password}")
+        except AttributeError:
+            # If the attributes aren't set, it means authentication didn't occur or `handle_AUTH` wasn't called
+            print("SMTP credentials not provided or authentication was not attempted.")
         mss=message.as_string(policy=EmailPolicy(utf8=True))
         print(f"Received message details: {mss}")
         mail_from = message['from']
@@ -107,17 +115,15 @@ class CustomHandler(Message):
         return '250 Message accepted for delivery'
     
     async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        print('handle_AUTH is called')
-        if mechanism != 'LOGIN':
-            return '535 Authentication mechanism not supported.'
-        
-        username = auth_data.login.decode()
-        password = auth_data.password.decode()
+        # Decode and temporarily store the username and password
+        self.smtp_username = auth_data.login.decode()
+        self.smtp_password = auth_data.password.decode()
 
-        if self.authenticate_and_increment(username, password):
-            return AuthResult(success=True)
-        else:
-            return AuthResult(success=False, message='535 Authentication failed.')
+        print(f"Authentication attempt with username: {self.smtp_username}, password: {self.smtp_password}")
+        
+        # Here, just return failure since we're not performing real authentication, or handle as needed
+        from aiosmtpd.smtp import AuthResult
+        return AuthResult(success=False, message='535 Authentication not performed.')
 
 if __name__ == "__main__":
     # For demonstration purposes; replace with secure configuration handling in production  ----587
