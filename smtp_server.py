@@ -70,12 +70,13 @@ class CustomHandler(Message):
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
 
     def handle_message(self, message):
-        print(message)
+
+        print(f"Received message details: {message}")
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
         body = self.extract_body(message)
-
+        
 
 
         print(f"Receiving message from: {mail_from}")
