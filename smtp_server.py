@@ -72,16 +72,23 @@ class CustomHandler(Message):
         else:
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
+        
+    def extract_username_from_email(email):
+        # Split the email address at '@' and take the domain part
+        domain = email.split('@')[-1]
+        
+        # Split the domain by '.' and exclude the last part (TLD)
+        domain_parts = domain.split('.')
+        username = '.'.join(domain_parts[:-1])
+        
+        return username
+        
 
     def handle_message(self, message):
          # Attempt to print the stored SMTP username and password
-        try:
-            print(f"SMTP username: {self.smtp_username}, SMTP password: {self.smtp_password}")
-        except AttributeError:
-            # If the attributes aren't set, it means authentication didn't occur or `handle_AUTH` wasn't called
-            print("SMTP credentials not provided or authentication was not attempted.")
-        mss=message.as_string(policy=EmailPolicy(utf8=True))
-        print(f"Received message details: {mss}")
+        mail_from = message['from'] 
+        
+
         mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
@@ -101,6 +108,9 @@ class CustomHandler(Message):
         else:
             name = ''
             from_email = mail_from
+        username = self.extract_username_from_email(from_email)
+        if(self.authenticate_and_increment(self, username)==False):
+            return "not authenticated"
         
         response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
             "from": from_email,
@@ -114,16 +124,6 @@ class CustomHandler(Message):
 
         return '250 Message accepted for delivery'
     
-    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-        # Decode and temporarily store the username and password
-        self.smtp_username = auth_data.login.decode()
-        self.smtp_password = auth_data.password.decode()
-
-        print(f"Authentication attempt with username: {self.smtp_username}, password: {self.smtp_password}")
-        
-        # Here, just return failure since we're not performing real authentication, or handle as needed
-        from aiosmtpd.smtp import AuthResult
-        return AuthResult(success=False, message='535 Authentication not performed.')
 
 if __name__ == "__main__":
     # For demonstration purposes; replace with secure configuration handling in production  ----587
