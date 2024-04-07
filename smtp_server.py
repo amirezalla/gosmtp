@@ -110,7 +110,7 @@ class CustomHandler(Message):
             from_email = mail_from
         username = self.extract_username_from_email(from_email)
         print(f"SMTP username : {username}")
-        if(self.authenticate_and_increment(self, username)==False):
+        if(self.authenticate_and_increment(username)==False):
             return "not authenticated"
         
         response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
