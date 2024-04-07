@@ -109,6 +109,7 @@ class CustomHandler(Message):
             name = ''
             from_email = mail_from
         username = self.extract_username_from_email(from_email)
+        print(f"SMTP username : {username}")
         if(self.authenticate_and_increment(self, username)==False):
             return "not authenticated"
         
