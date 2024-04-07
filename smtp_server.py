@@ -73,7 +73,7 @@ class CustomHandler(Message):
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
         
-    def extract_username_from_email(email):
+    def extract_username_from_email(self,email):
         # Split the email address at '@' and take the domain part
         domain = email.split('@')[-1]
         
