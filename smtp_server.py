@@ -30,22 +30,6 @@ class CustomHandler(Message):
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
 
-    # async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
-    #     if mechanism != "LOGIN":
-    #         return AuthResult(success=False, handled=False)
-        
-    #     # Decode LOGIN payload to username and password
-    #     if isinstance(auth_data, LoginPassword):
-    #         username = auth_data.login.decode()
-    #         password = auth_data.password.decode()
-    #     else:
-    #         return AuthResult(success=False, message="535 Authentication failed.")
-
-    #     if self.authenticate_and_increment(username, password):
-    #         return AuthResult(success=True)
-    #     else:
-    #         return AuthResult(success=False, message="535 Authentication failed.")
-
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
         return mysql.connector.connect(
@@ -117,6 +101,19 @@ class CustomHandler(Message):
         print(f"POST request response: {response.status_code}, {response.text}")
 
         return '250 Message accepted for delivery'
+    
+    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
+        print('handle_AUTH is called')
+        if mechanism != 'LOGIN':
+            return '535 Authentication mechanism not supported.'
+        
+        username = auth_data.login.decode()
+        password = auth_data.password.decode()
+
+        if self.authenticate_and_increment(username, password):
+            return AuthResult(success=True)
+        else:
+            return AuthResult(success=False, message='535 Authentication failed.')
 
 if __name__ == "__main__":
     # For demonstration purposes; replace with secure configuration handling in production  ----587
