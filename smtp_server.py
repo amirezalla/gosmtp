@@ -9,7 +9,7 @@ import os
 from email.message import EmailMessage
 from email.policy import EmailPolicy
 import logging
-from aiosmtpd.smtp import SMTP, AuthResult, Session, Envelope
+from aiosmtpd.smtp import SMTP, AuthResult, Session, Envelope,LoginPassword
 import hashlib
 
 
@@ -43,6 +43,12 @@ class CustomHandler(Message):
         self.db_username = os.getenv('DB_USERNAME')
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
+
+    async def handle_AUTH(self, server, session, envelope, mechanism, auth_data):
+        if mechanism == 'LOGIN':
+            return await self.auth_LOGIN(server, session, envelope, auth_data)
+        else:
+            return AuthResult(success=False, message="535 Authentication mechanism not supported.")
 
     async def auth_LOGIN(self, server: SMTP, session: Session, envelope: Envelope, login_data: bytes):
         decoded_data = login_data.decode()
