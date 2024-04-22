@@ -46,7 +46,7 @@ class CustomHandler(Message):
         if len(credentials) < 3:
             return AuthResult(success=False, handled=False)
         _, username, password = credentials  # login_data is base64 encoded '\0username\0password'
-        
+        print(username,password)
         if self.authenticate(username, password):
             return AuthResult(success=True)
         else:
