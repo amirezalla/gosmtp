@@ -12,8 +12,8 @@ import logging
 from aiosmtpd.smtp import SMTP, AuthResult, Session, Envelope
 
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 
@@ -112,10 +112,10 @@ class CustomHandler(Message):
         body = self.extract_body(message)
         
 
-        logger.info(f"Receiving message from: {mail_from}")
-        logger.info(f"Message addressed to: {rcpt_tos}")
-        logger.info(f"Subject: {subject}")
-        logger.info(f"Body: {body}")
+        print(f"Receiving message from: {mail_from}")
+        print(f"Message addressed to: {rcpt_tos}")
+        print(f"Subject: {subject}")
+        print(f"Body: {body}")
 
         match = re.match(r'(?P<name>.+?)\s*<(?P<email>\S+@\S+)>', mail_from)
         if match:
