@@ -33,6 +33,8 @@ class CustomHandler(Message):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message_class = EmailMessage
+        self.authenticated_username = None
+        self.authenticated_password_hash = None
 
         self.smtp_username = None
         self.smtp_password = None
@@ -42,6 +44,20 @@ class CustomHandler(Message):
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
 
+    async def auth_LOGIN(self, server: SMTP, session: Session, envelope: Envelope, login_data: bytes):
+        decoded_data = login_data.decode()
+        credentials = decoded_data.split('\0')
+        if len(credentials) < 3:
+            return AuthResult(success=False, handled=False)
+        _, username, password = credentials
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        # Store hashed password and username for later use
+        self.authenticated_username = username
+        self.authenticated_password_hash = password_hash
+        if self.authenticate(username, password_hash):
+            return AuthResult(success=True)
+        else:
+            return AuthResult(success=False, message="550 Authentication failed")
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
@@ -96,14 +112,7 @@ class CustomHandler(Message):
         
 
     def handle_message(self, message,login_data: bytes):
-        decoded_data = login_data.decode()
-        credentials = decoded_data.split('\0')
-        if len(credentials) < 3:
-            return AuthResult(success=False, handled=False)
-        _, username, password = credentials
-        # Hash password before comparison for security
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        logger.info(password_hash)
+        print(self.authenticated_password_hash)
         # Attempt to print the stored SMTP username and password
         mail_from = message['from'] 
         rcpt_tos = message['to']
