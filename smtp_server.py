@@ -14,8 +14,8 @@ import hashlib
 
 
 
-# logger = logging.getLogger(__name__)
-# logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 
 
@@ -51,7 +51,7 @@ class CustomHandler(Message):
 
         # Hash password before comparison for security
         password_hash = hashlib.sha256(password.encode()).hexdigest()
-        print(password_hash)
+        logger.info(password_hash)
         # if self.authenticate(username, password_hash):
         #     return AuthResult(success=True)
         # else:
