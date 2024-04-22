@@ -111,7 +111,7 @@ class CustomHandler(Message):
         return username
         
 
-    def handle_message(self, message,login_data: bytes):
+    def handle_message(self, message):
         print(self.authenticated_password_hash)
         # Attempt to print the stored SMTP username and password
         mail_from = message['from'] 
