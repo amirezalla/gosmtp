@@ -47,17 +47,12 @@ class CustomHandler(Message):
     async def auth_LOGIN(self, server: SMTP, session: Session, envelope: Envelope, login_data: bytes):
         decoded_data = login_data.decode()
         credentials = decoded_data.split('\0')
-        if len(credentials) < 3:
-            return AuthResult(success=False, handled=False)
         _, username, password = credentials
         password_hash = hashlib.sha256(password.encode()).hexdigest()
         # Store hashed password and username for later use
         self.authenticated_username = username
         self.authenticated_password_hash = password_hash
-        if self.authenticate(username, password_hash):
-            return AuthResult(success=True)
-        else:
-            return AuthResult(success=False, message="550 Authentication failed")
+
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
