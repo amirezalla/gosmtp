@@ -10,6 +10,8 @@ from email.message import EmailMessage
 from email.policy import EmailPolicy
 import logging
 from aiosmtpd.smtp import SMTP, AuthResult, Session, Envelope
+import hashlib
+
 
 
 # logger = logging.getLogger(__name__)
@@ -42,15 +44,18 @@ class CustomHandler(Message):
 
     async def auth_LOGIN(self, server: SMTP, session: Session, envelope: Envelope, login_data: bytes):
         decoded_data = login_data.decode()
-        print(decoded_data)
         credentials = decoded_data.split('\0')
         if len(credentials) < 3:
             return AuthResult(success=False, handled=False)
-        _, username, password = credentials  # login_data is base64 encoded '\0username\0password'
-        if self.authenticate(username, password):
-            return AuthResult(success=True)
-        else:
-            return AuthResult(success=False, message="550 Authentication failed")
+        _, username, password = credentials
+
+        # Hash password before comparison for security
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        print(password_hash)
+        # if self.authenticate(username, password_hash):
+        #     return AuthResult(success=True)
+        # else:
+        #     return AuthResult(success=False, message="550 Authentication failed")
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
