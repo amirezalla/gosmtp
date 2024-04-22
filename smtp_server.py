@@ -42,11 +42,11 @@ class CustomHandler(Message):
 
     async def auth_LOGIN(self, server: SMTP, session: Session, envelope: Envelope, login_data: bytes):
         decoded_data = login_data.decode()
+        print(decoded_data)
         credentials = decoded_data.split('\0')
         if len(credentials) < 3:
             return AuthResult(success=False, handled=False)
         _, username, password = credentials  # login_data is base64 encoded '\0username\0password'
-        print(username,password)
         if self.authenticate(username, password):
             return AuthResult(success=True)
         else:
