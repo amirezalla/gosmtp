@@ -1,6 +1,5 @@
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import Message
-from aiosmtpd.smtp import AuthResult, LoginPassword
 import requests
 import asyncio
 import socket
@@ -9,6 +8,12 @@ import mysql.connector
 import os
 from email.message import EmailMessage
 from email.policy import EmailPolicy
+import logging
+from aiosmtpd.smtp import SMTP, AuthResult, Session, Envelope
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 
 
@@ -20,6 +25,7 @@ def get_local_ip_address():
             return s.getsockname()[0]
     except Exception:
         return 'localhost'
+
 
 class CustomHandler(Message):
     def __init__(self,*args, **kwargs):
@@ -33,6 +39,18 @@ class CustomHandler(Message):
         self.db_username = os.getenv('DB_USERNAME')
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
+
+    async def auth_LOGIN(self, server: SMTP, session: Session, envelope: Envelope, login_data: bytes):
+        decoded_data = login_data.decode()
+        credentials = decoded_data.split('\0')
+        if len(credentials) < 3:
+            return AuthResult(success=False, handled=False)
+        _, username, password = credentials  # login_data is base64 encoded '\0username\0password'
+        
+        if self.authenticate(username, password):
+            return AuthResult(success=True)
+        else:
+            return AuthResult(success=False, message="550 Authentication failed")
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
@@ -64,15 +82,17 @@ class CustomHandler(Message):
                 conn.close()
         return False
             
-
-    def extract_body(self, message):
+    # ----------STABLE----------
+    def extract_body(self, message): 
         if message.is_multipart():
             parts = [self.extract_body(part) for part in message.get_payload()]
             return "\n".join(filter(None, parts))
         else:
             payload = message.get_payload(decode=True)
             return payload.decode('utf-8') if isinstance(payload, bytes) else payload
-        
+
+
+    # ----------STABLE----------
     def extract_username_from_email(self,email):
         # Split the email address at '@' and take the domain part
         domain = email.split('@')[-1]
@@ -87,19 +107,15 @@ class CustomHandler(Message):
     def handle_message(self, message):
          # Attempt to print the stored SMTP username and password
         mail_from = message['from'] 
-        
-
-        mail_from = message['from']
         rcpt_tos = message['to']
         subject = message['subject']
         body = self.extract_body(message)
         
 
-
-        print(f"Receiving message from: {mail_from}")
-        print(f"Message addressed to: {rcpt_tos}")
-        print(f"Subject: {subject}")
-        print(f"Body: {body}")
+        logger.info(f"Receiving message from: {mail_from}")
+        logger.info(f"Message addressed to: {rcpt_tos}")
+        logger.info(f"Subject: {subject}")
+        logger.info(f"Body: {body}")
 
         match = re.match(r'(?P<name>.+?)\s*<(?P<email>\S+@\S+)>', mail_from)
         if match:
@@ -140,7 +156,7 @@ if __name__ == "__main__":
     asyncio.set_event_loop(loop)
     for port in ports:
         handler = CustomHandler()
-        controller = Controller(handler, hostname=hostname, port=port) 
+        controller = Controller(handler, hostname=hostname, port=port)
         controller.start()
         print(f"SMTP server is running at {hostname}:{port}")
     try:
