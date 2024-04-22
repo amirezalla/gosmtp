@@ -115,7 +115,7 @@ class CustomHandler(Message):
         print(f"Receiving message from: {mail_from}")
         print(f"Message addressed to: {rcpt_tos}")
         print(f"Subject: {subject}")
-        print(f"Body: {body}")
+        # print(f"Body: {body}")
 
         match = re.match(r'(?P<name>.+?)\s*<(?P<email>\S+@\S+)>', mail_from)
         if match:
