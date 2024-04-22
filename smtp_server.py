@@ -42,20 +42,6 @@ class CustomHandler(Message):
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_name = os.getenv('DB_NAME')
 
-    async def auth_LOGIN(self, server: SMTP, session: Session, envelope: Envelope, login_data: bytes):
-        decoded_data = login_data.decode()
-        credentials = decoded_data.split('\0')
-        if len(credentials) < 3:
-            return AuthResult(success=False, handled=False)
-        _, username, password = credentials
-
-        # Hash password before comparison for security
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        logger.info(password_hash)
-        # if self.authenticate(username, password_hash):
-        #     return AuthResult(success=True)
-        # else:
-        #     return AuthResult(success=False, message="550 Authentication failed")
 
     def create_db_connection(self):
         """Establishes a connection to the MySQL database."""
@@ -109,8 +95,16 @@ class CustomHandler(Message):
         return username
         
 
-    def handle_message(self, message):
-         # Attempt to print the stored SMTP username and password
+    def handle_message(self, message,login_data: bytes):
+        decoded_data = login_data.decode()
+        credentials = decoded_data.split('\0')
+        if len(credentials) < 3:
+            return AuthResult(success=False, handled=False)
+        _, username, password = credentials
+        # Hash password before comparison for security
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        logger.info(password_hash)
+        # Attempt to print the stored SMTP username and password
         mail_from = message['from'] 
         rcpt_tos = message['to']
         subject = message['subject']
