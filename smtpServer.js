@@ -74,20 +74,12 @@ function getServerIPAddress() {
     return 'localhost'; // Return localhost if no external IP is found
 }
 
-const secureServer = tls.createServer(serverOptions, (socket) => {
-    console.log('Client connected',
-        socket.authorized ? 'authorized' : 'unauthorized');
+const server = new SMTPServer(serverOptions);
 
-    socket.on('error', (error) => {
-        console.error(error);
-    });
+server.listen(1025, () => {  // Standard port for SMTPS
+    console.log('Secure SMTP server running on port 465');
 });
 
-
-secureServer.listen(1025, () => {
-    const ip = getServerIPAddress();
-    console.log(`SMTP Server is running at ${ip} on port 1025.`);
-});
 
 
 function authenticateUser(username, password, callback) {
