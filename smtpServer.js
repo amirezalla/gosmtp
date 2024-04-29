@@ -3,6 +3,8 @@ const { simpleParser } = require('mailparser');
 const axios = require('axios');
 const mysql = require('mysql');
 const os = require('os');
+const tls = require('tls');
+const fs = require('fs');
 
 
 // Create database connection
