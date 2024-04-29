@@ -20,6 +20,8 @@ db.connect(err => {
 
 // SMTP server options
 const serverOptions = {
+    key: fs.readFileSync('key.pem'),  // Path to your private key
+    cert: fs.readFileSync('cert.pem'),  // Path to your certificate
     // Not using secure (TLS) communication
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
@@ -70,9 +72,17 @@ function getServerIPAddress() {
     return 'localhost'; // Return localhost if no external IP is found
 }
 
-const server = new SMTPServer(serverOptions);
+const secureServer = tls.createServer(serverOptions, (socket) => {
+    console.log('Client connected',
+        socket.authorized ? 'authorized' : 'unauthorized');
 
-server.listen(1025, () => {
+    socket.on('error', (error) => {
+        console.error(error);
+    });
+});
+
+
+secureServer.listen(1025, () => {
     const ip = getServerIPAddress();
     console.log(`SMTP Server is running at ${ip} on port 1025.`);
 });
