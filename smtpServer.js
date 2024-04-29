@@ -22,8 +22,8 @@ db.connect(err => {
 
 // SMTP server options
 const serverOptions = {
-    key: fs.readFileSync('key.pem'),  // Path to your private key
-    cert: fs.readFileSync('cert.pem'),  // Path to your certificate
+    key: fs.readFileSync('sendgrid.icoa.it-key.pem'),  // Path to your private key
+    cert: fs.readFileSync('sendgrid.icoa.it.pem'),  // Path to your certificate
     // Not using secure (TLS) communication
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
