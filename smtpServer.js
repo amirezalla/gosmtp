@@ -28,8 +28,7 @@ const secureContext = tls.createSecureContext({
 
 // SMTP server options
 const serverOptions = {
-    secure: false,  // Enforce TLS communication
-    secureContext,  // Use the created secure context
+    secure: false,  // Use STARTTLS instead of immediate TLS
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
         simpleParser(stream, async (err, parsed) => {
@@ -62,13 +61,18 @@ const serverOptions = {
                 return callback(new Error('Invalid credentials'), false); // Failed authentication
             }
         });
-    }
+    },
+    onConnect(session, callback) {
+        session.servername = 'sendgrid.icoa.it'; // Ensure the servername is set for SNI
+        callback();
+    },
+    secureContext: secureContext
 };
 
 const server = new SMTPServer(serverOptions);
 
-server.listen(1025, () => {  // Standard port for SMTPS
-    console.log('Secure SMTP server running on port 1025');
+server.listen(1025, () => {  // Use a higher port like 1025
+    console.log('SMTP server running on port 1025 with STARTTLS');
 });
 
 function authenticateUser(username, password, callback) {
