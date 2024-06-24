@@ -67,8 +67,8 @@ const serverOptions = {
 
 const server = new SMTPServer(serverOptions);
 
-server.listen(465, () => {  // Standard port for SMTPS
-    console.log('Secure SMTP server running on port 465');
+server.listen(1025, () => {  // Standard port for SMTPS
+    console.log('Secure SMTP server running on port 1025');
 });
 
 function authenticateUser(username, password, callback) {
