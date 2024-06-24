@@ -28,7 +28,7 @@ const secureContext = tls.createSecureContext({
 
 // SMTP server options
 const serverOptions = {
-    secure: false,  // Use STARTTLS instead of immediate TLS
+    secure: true,  //ENFORCE SSL
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
         simpleParser(stream, async (err, parsed) => {
@@ -72,7 +72,7 @@ const serverOptions = {
 const server = new SMTPServer(serverOptions);
 
 server.listen(1025, () => {  // Use a higher port like 1025
-    console.log('SMTP server running on port 1025 with STARTTLS');
+    console.log('SMTP server running on port 1025 with SSL');
 });
 
 function authenticateUser(username, password, callback) {
