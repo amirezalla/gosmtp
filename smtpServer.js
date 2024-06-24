@@ -1,4 +1,3 @@
-const tls = require('tls');
 const fs = require('fs');
 const { SMTPServer } = require('smtp-server');
 const { simpleParser } = require('mailparser');
@@ -20,15 +19,16 @@ db.connect(err => {
 });
 
 // SSL/TLS Options
-const secureContext = tls.createSecureContext({
-    key: fs.readFileSync('sendgrid.icoa.it-key.pem'),  // Path to your private key
-    cert: fs.readFileSync('sendgrid.icoa.it.crt'),    // Path to your certificate
-});
+const secureContext = {
+    key: fs.readFileSync('sendgrid.icoa.it-key.pem'),
+    cert: fs.readFileSync('sendgrid.icoa.it.crt')
+};
 
 // SMTP server options
 const serverOptions = {
-    secure: true,  // Enforce TLS communication
-    secureContext,  // Use the created secure context
+    key: fs.readFileSync('sendgrid.icoa.it-key.pem'),  // Path to your private key
+    cert: fs.readFileSync('sendgrid.icoa.it.crt'),    // Path to your certificate
+    secure: true,  // Enforce SSL communication
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
         simpleParser(stream, async (err, parsed) => {
@@ -66,7 +66,7 @@ const serverOptions = {
 
 const server = new SMTPServer(serverOptions);
 
-server.listen(1025, () => {  // Standard port for SMTPS
+server.listen(1025, () => {  // Standard port for SMTPS (SSL)
     console.log('Secure SMTP server running on port 1025');
 });
 
