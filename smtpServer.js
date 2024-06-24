@@ -28,7 +28,7 @@ const secureContext = tls.createSecureContext({
 
 // SMTP server options
 const serverOptions = {
-    secure: true,  // Enforce TLS communication
+    secure: false,  // Enforce TLS communication
     secureContext,  // Use the created secure context
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
