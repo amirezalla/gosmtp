@@ -1,10 +1,15 @@
-const tls = require('tls');
+
+const https = require('https');
 const fs = require('fs');
+const tls = require('tls');
 const { SMTPServer } = require('smtp-server');
 const { simpleParser } = require('mailparser');
 const axios = require('axios');
 const mysql = require('mysql');
 const os = require('os');
+
+// Environment variables setup
+require('dotenv').config();
 
 // Create database connection
 const db = mysql.createConnection({
@@ -21,9 +26,39 @@ db.connect(err => {
 
 // SSL/TLS Options
 const secureContext = tls.createSecureContext({
-    key: fs.readFileSync('sendgrid.icoa.it-key.pem'),
-    cert: fs.readFileSync('sendgrid.icoa.it.crt'),
+    key: fs.readFileSync("sendgrid.icoa.it-key.pem"),
+    cert: fs.readFileSync("sendgrid.icoa.it.crt"),
     minVersion: 'TLSv1.2',  // Enforce TLS v1.2 or higher
+});
+
+// Create HTTPS server
+const httpsServer = https.createServer({
+    key: fs.readFileSync("sendgrid.icoa.it-key.pem"),
+    cert: fs.readFileSync("sendgrid.icoa.it.crt")
+}, (req, res) => {
+    // Proxy to SMTP server
+    const options = {
+        hostname: 'localhost',
+        port: 1025,
+        path: req.url,
+        method: req.method,
+        headers: req.headers
+    };
+
+    const proxy = https.request(options, function (proxyRes) {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(res, {
+            end: true
+        });
+    });
+
+    req.pipe(proxy, {
+        end: true
+    });
+});
+
+httpsServer.listen(443, () => {
+    console.log('HTTPS server running on port 443');
 });
 
 // SMTP server options
@@ -34,7 +69,7 @@ const serverOptions = {
     onData(stream, session, callback) {
         simpleParser(stream, async (err, parsed) => {
             if (err) {
-                console.error(err);
+                console.error('Failed to parse email:', err);
                 return callback(err);
             }
 
@@ -67,22 +102,26 @@ const serverOptions = {
         session.servername = 'sendgrid.icoa.it'; // Ensure the servername is set for SNI
         callback();
     },
-    secureContext: secureContext
 };
 
-const server = new SMTPServer(serverOptions);
+const smtpServer = new SMTPServer(serverOptions);
 
-server.listen(1025, () => {  // Use a higher port like 1025
+smtpServer.listen(1025, () => {  // Use a higher port like 1025
     console.log('SMTP server running on port 1025 with SSL');
 });
 
 function authenticateUser(username, password, callback) {
     db.query('SELECT * FROM `smtp` WHERE `username` = ? and `password`= ?', [username, password], (err, results) => {
         if (err) {
+            console.error('Database query error:', err.message);
             return callback(err, false);
         }
         if (results.length > 0) {
-            db.query('UPDATE `smtp` SET `usage` = `usage` + 1 WHERE `username` = ?', [username]);
+            db.query('UPDATE `smtp` SET `usage` = `usage` + 1 WHERE `username` = ?', [username], (err) => {
+                if (err) {
+                    console.error('Failed to update usage:', err.message);
+                }
+            });
             return callback(null, true);
         } else {
             return callback(null, false);
@@ -91,14 +130,17 @@ function authenticateUser(username, password, callback) {
 }
 
 function forwardEmail(from, recipients, subject, body) {
-    axios.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', {
+    axios.post("https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail", {
         from: from,
         recipients: recipients,
         subject: subject,
         message: body
     })
         .then(response => console.log('Email forwarded:', response.status, response.data))
-        .catch(error => console.error('Failed to forward email:', error));
+        .catch(error => {
+            console.error('Failed to forward email:', error.message);
+            // Consider adding more details or retries
+        });
 }
 
 function getServerIPAddress() {
