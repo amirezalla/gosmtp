@@ -8,8 +8,6 @@ const axios = require('axios');
 const mysql = require('mysql');
 const os = require('os');
 
-// Environment variables setup
-require('dotenv').config();
 
 // Create database connection
 const db = mysql.createConnection({
