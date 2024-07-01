@@ -37,7 +37,7 @@ const httpsServer = https.createServer({
     // Proxy to SMTP server
     const options = {
         hostname: 'localhost',
-        port: 1025,
+        port: 1024,
         path: req.url,
         method: req.method,
         headers: req.headers
