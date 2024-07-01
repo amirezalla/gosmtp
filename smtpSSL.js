@@ -29,6 +29,7 @@ const secureContext = tls.createSecureContext({
 // SMTP server options
 const serverOptions = {
     secure: true,  //ENFORCE SSL
+    secureContext,
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
         simpleParser(stream, async (err, parsed) => {
