@@ -27,8 +27,8 @@ db.connect(err => {
 
 // SSL/TLS Options
 const secureContext = tls.createSecureContext({
-    key: pems.private,
-    cert: pems.cert,
+    key: fs.readFileSync('sendgrid.icoa.it-key.pem'),
+    cert: fs.readFileSync('sendgrid.icoa.it.crt'),
     minVersion: 'TLSv1.2',  // Enforce TLS v1.2 or higher
 });
 
