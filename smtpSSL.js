@@ -1,13 +1,16 @@
-
-const https = require('https');
-const fs = require('fs');
 const tls = require('tls');
+const fs = require('fs');
 const { SMTPServer } = require('smtp-server');
 const { simpleParser } = require('mailparser');
 const axios = require('axios');
 const mysql = require('mysql');
 const os = require('os');
+const selfsigned = require('selfsigned');
 
+// Generate self-signed certificate
+const attrs = [{ name: 'commonName', value: 'localhost' }];
+const opts = { days: 365 };
+const pems = selfsigned.generate(attrs, opts);
 
 // Create database connection
 const db = mysql.createConnection({
@@ -24,39 +27,9 @@ db.connect(err => {
 
 // SSL/TLS Options
 const secureContext = tls.createSecureContext({
-    key: fs.readFileSync("sendgrid.icoa.it-key.pem"),
-    cert: fs.readFileSync("sendgrid.icoa.it.crt"),
+    key: pems.private,
+    cert: pems.cert,
     minVersion: 'TLSv1.2',  // Enforce TLS v1.2 or higher
-});
-
-// Create HTTPS server
-const httpsServer = https.createServer({
-    key: fs.readFileSync("sendgrid.icoa.it-key.pem"),
-    cert: fs.readFileSync("sendgrid.icoa.it.crt")
-}, (req, res) => {
-    // Proxy to SMTP server
-    const options = {
-        hostname: 'localhost',
-        port: 1024,
-        path: req.url,
-        method: req.method,
-        headers: req.headers
-    };
-
-    const proxy = https.request(options, function (proxyRes) {
-        res.writeHead(proxyRes.statusCode, proxyRes.headers);
-        proxyRes.pipe(res, {
-            end: true
-        });
-    });
-
-    req.pipe(proxy, {
-        end: true
-    });
-});
-
-httpsServer.listen(1025, () => {
-    console.log('HTTPS server running on port 1025');
 });
 
 // SMTP server options
@@ -102,9 +75,9 @@ const serverOptions = {
     },
 };
 
-const smtpServer = new SMTPServer(serverOptions);
+const server = new SMTPServer(serverOptions);
 
-smtpServer.listen(1025, () => {  // Use a higher port like 1025
+server.listen(1025, () => {  // Use a higher port like 1025
     console.log('SMTP server running on port 1025 with SSL');
 });
 
@@ -128,7 +101,7 @@ function authenticateUser(username, password, callback) {
 }
 
 function forwardEmail(from, recipients, subject, body) {
-    axios.post("https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail", {
+    axios.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', {
         from: from,
         recipients: recipients,
         subject: subject,
