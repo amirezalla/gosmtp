@@ -5,12 +5,6 @@ const { simpleParser } = require('mailparser');
 const axios = require('axios');
 const mysql = require('mysql');
 const os = require('os');
-const selfsigned = require('selfsigned');
-
-// Generate self-signed certificate
-const attrs = [{ name: 'commonName', value: 'localhost' }];
-const opts = { days: 365 };
-const pems = selfsigned.generate(attrs, opts);
 
 // Create database connection
 const db = mysql.createConnection({
@@ -34,13 +28,12 @@ const secureContext = tls.createSecureContext({
 
 // SMTP server options
 const serverOptions = {
-    secure: true,  //ENFORCE SSL
-    secureContext,
+    secure: true,  // Use STARTTLS instead of immediate TLS
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
         simpleParser(stream, async (err, parsed) => {
             if (err) {
-                console.error('Failed to parse email:', err);
+                console.error(err);
                 return callback(err);
             }
 
@@ -73,26 +66,22 @@ const serverOptions = {
         session.servername = 'sendgrid.icoa.it'; // Ensure the servername is set for SNI
         callback();
     },
+    secureContext: secureContext
 };
 
 const server = new SMTPServer(serverOptions);
 
-server.listen(1025, () => {  // Use a higher port like 1025
-    console.log('SMTP server running on port 1025 with SSL');
+server.listen(1024, () => {  // Use a higher port like 1025
+    console.log('SMTP server running on port 1024 with TLS');
 });
 
 function authenticateUser(username, password, callback) {
     db.query('SELECT * FROM `smtp` WHERE `username` = ? and `password`= ?', [username, password], (err, results) => {
         if (err) {
-            console.error('Database query error:', err.message);
             return callback(err, false);
         }
         if (results.length > 0) {
-            db.query('UPDATE `smtp` SET `usage` = `usage` + 1 WHERE `username` = ?', [username], (err) => {
-                if (err) {
-                    console.error('Failed to update usage:', err.message);
-                }
-            });
+            db.query('UPDATE `smtp` SET `usage` = `usage` + 1 WHERE `username` = ?', [username]);
             return callback(null, true);
         } else {
             return callback(null, false);
@@ -108,10 +97,7 @@ function forwardEmail(from, recipients, subject, body) {
         message: body
     })
         .then(response => console.log('Email forwarded:', response.status, response.data))
-        .catch(error => {
-            console.error('Failed to forward email:', error.message);
-            // Consider adding more details or retries
-        });
+        .catch(error => console.error('Failed to forward email:', error));
 }
 
 function getServerIPAddress() {
