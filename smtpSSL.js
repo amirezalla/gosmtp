@@ -25,7 +25,7 @@ db.connect(err => {
 const secureContext = tls.createSecureContext({
     key: fs.readFileSync('sendgrid.icoa.it-key.pem'),
     cert: fs.readFileSync('sendgrid.icoa.it.crt'),
-    minVersion: 'TLSv1.3',  // Enforce TLS v1.2 or higher
+    minVersion: 'TLSv1.2',  // Enforce TLS v1.2 or higher
 });
 
 // SMTP server options
