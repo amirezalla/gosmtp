@@ -22,11 +22,16 @@ db.connect(err => {
 });
 
 // SSL/TLS Options
-
+const secureContext = tls.createSecureContext({
+    key: fs.readFileSync('sendgrid.icoa.it-key.pem'),
+    cert: fs.readFileSync('sendgrid.icoa.it.crt'),
+    ca: fs.readFileSync('ca-bundle.crt'),
+    minVersion: 'TLSv1.2',  // Enforce TLS v1.2 or higher
+});
 
 // SMTP server options
 const serverOptions = {
-    secure: false,  // Use STARTTLS instead of immediate TLS
+    secure: true,  // Use STARTTLS instead of immediate TLS
     authOptional: false,  // Require authentication
     onData(stream, session, callback) {
         simpleParser(stream, async (err, parsed) => {
@@ -64,6 +69,7 @@ const serverOptions = {
         session.servername = 'sendgrid.icoa.it'; // Ensure the servername is set for SNI
         callback();
     },
+    secureContext: secureContext
 };
 
 const server = new SMTPServer(serverOptions);
