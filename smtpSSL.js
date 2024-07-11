@@ -65,7 +65,6 @@ const serverOptions = {
         session.servername = 'sendgrid.icoa.it'; // Ensure the servername is set for SNI
         callback();
     },
-    secureContext: secureContext
 };
 
 const server = new SMTPServer(serverOptions);
