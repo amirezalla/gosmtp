@@ -73,8 +73,8 @@ const serverOptions = {
 
 const server = new SMTPServer(serverOptions);
 
-server.listen(587, () => {  // Use a higher port like 587
-    console.log('SMTP server running on port 587 with SSL');
+server.listen(1025, () => {  // Use a higher port like 1025
+    console.log('SMTP server running on port 1025 with SSL');
 });
 
 function authenticateUser(username, password, callback) {
