@@ -45,14 +45,17 @@ class CustomMessageHandler:
         return '250 Message processed'
 
     def forward_email(self, from_address, to_address, subject, body):
+        payload = {
+            'from': from_address,
+            'recipients': to_address,
+            'subject': subject,
+            'message': body
+        }
+
         try:
-            response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
-                'from': from_address,
-                'recipients': to_address,
-                'subject': subject,
-                'message': body
-            })
+            response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json=payload)
             # Debugging information
+            print('Payload:', payload)
             print('HTTP Status Code:', response.status_code)
             print('Response Headers:', response.headers)
             print('Response Content:', response.text)
