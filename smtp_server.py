@@ -49,8 +49,8 @@ class CustomMessageHandler:
             response = requests.post('https://sendgrid-hlixxcbawa-uc.a.run.app/api/sendEmail', json={
                 'from': from_address,
                 'recipients': to_address,
-                'subject': subject,
-                'message': body
+                'subject': "subject",
+                'message': "message"
             })
             print('Email forwarded:', response.status_code, response.json())
         except requests.exceptions.RequestException as e:
