@@ -2,6 +2,7 @@ import asyncio
 import ssl
 from aiosmtpd.controller import Controller
 from email.parser import BytesParser
+import email
 import mysql.connector
 import requests
 import socket
@@ -28,7 +29,9 @@ class CustomMessageHandler:
         from_address = msg['from']
         to_address = msg['to']
         subject = msg['subject']
-        body = msg.get_payload()
+        
+        # Convert the email message to a string to forward it
+        body = msg.get_payload(decode=True).decode('utf-8', errors='replace')
 
         print(f'Received email from: {from_address}')
         
