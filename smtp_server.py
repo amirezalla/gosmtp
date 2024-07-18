@@ -3,6 +3,7 @@ import ssl
 from aiosmtpd.controller import Controller
 from email.parser import BytesParser
 from email.policy import default
+from email.utils import parseaddr
 import mysql.connector
 import requests
 import socket
@@ -39,14 +40,17 @@ class CustomMessageHandler:
 
         print(f'Received email from: {from_address}')
         
+        # Extract only the email address from 'from_address'
+        from_email = parseaddr(from_address)[1]
+
         # Forward email
-        self.forward_email(from_address, to_address, subject, body)
+        self.forward_email(from_email, to_address, subject, body)
 
         return '250 Message processed'
 
-    def forward_email(self, from_address, to_address, subject, body):
+    def forward_email(self, from_email, to_address, subject, body):
         payload = {
-            'from': from_address,
+            'from': from_email,
             'recipients': to_address,
             'subject': subject,
             'message': body
