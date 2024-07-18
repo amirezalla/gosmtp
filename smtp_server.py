@@ -1,12 +1,10 @@
-import smtpd
-import ssl
 import asyncio
-import email
+import ssl
+from aiosmtpd.controller import Controller
 from email.parser import BytesParser
-import requests
 import mysql.connector
+import requests
 import socket
-
 
 # Create database connection
 db_config = {
@@ -24,9 +22,9 @@ print('Connected to database.')
 ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 ssl_context.load_cert_chain(certfile='sendgrid.icoa.it.crt', keyfile='sendgrid.icoa.it-key.pem')
 
-class CustomSMTPServer(smtpd.SMTPServer):
-    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
-        msg = BytesParser().parsebytes(data)
+class CustomMessageHandler:
+    async def handle_DATA(self, server, session, envelope):
+        msg = BytesParser().parsebytes(envelope.content)
         from_address = msg['from']
         to_address = msg['to']
         subject = msg['subject']
@@ -37,7 +35,7 @@ class CustomSMTPServer(smtpd.SMTPServer):
         # Forward email
         self.forward_email(from_address, to_address, subject, body)
 
-        return 'Message processed'
+        return '250 Message processed'
 
     def forward_email(self, from_address, to_address, subject, body):
         try:
@@ -63,27 +61,19 @@ class CustomSMTPServer(smtpd.SMTPServer):
             return True
         return False
 
-    def handle_AUTH(self, username, password):
-        if self.authenticate_user(username, password):
-            return '235 Authentication successful'
-        else:
-            return '535 Authentication credentials invalid'
-
 def get_server_ip_address():
     hostname = socket.gethostname()
     return socket.gethostbyname(hostname)
 
 async def start_server():
-    loop = asyncio.get_event_loop()
-    server = await loop.create_server(
-        lambda: CustomSMTPServer(('0.0.0.0', 1025), None),
-        ssl=ssl_context
-    )
+    handler = CustomMessageHandler()
+    controller = Controller(handler, hostname='0.0.0.0', port=1025, ssl_context=ssl_context)
+    controller.start()
     print(f'SMTP server running on port 1025 with SSL')
     try:
-        await server.serve_forever()
+        await asyncio.Future()  # Run forever
     except KeyboardInterrupt:
-        pass
+        controller.stop()
 
 if __name__ == '__main__':
     asyncio.run(start_server())
