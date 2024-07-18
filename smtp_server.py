@@ -52,9 +52,16 @@ class CustomMessageHandler:
                 'subject': subject,
                 'message': body
             })
+            # Debugging information
+            print('HTTP Status Code:', response.status_code)
+            print('Response Headers:', response.headers)
+            print('Response Content:', response.text)
+            response.raise_for_status()  # Raise an exception for HTTP errors
             print('Email forwarded:', response.status_code, response.json())
         except requests.exceptions.RequestException as e:
             print('Failed to forward email:', e)
+            if e.response is not None:
+                print('Response Content:', e.response.text)
 
     def authenticate_user(self, username, password):
         query = "SELECT * FROM `smtp` WHERE `username` = %s AND `password` = %s"
