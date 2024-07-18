@@ -2,7 +2,7 @@ import asyncio
 import ssl
 from aiosmtpd.controller import Controller
 from email.parser import BytesParser
-import email
+from email.policy import default
 import mysql.connector
 import requests
 import socket
@@ -25,13 +25,17 @@ ssl_context.load_cert_chain(certfile='sendgrid.icoa.it.crt', keyfile='sendgrid.i
 
 class CustomMessageHandler:
     async def handle_DATA(self, server, session, envelope):
-        msg = BytesParser().parsebytes(envelope.content)
+        msg = BytesParser(policy=default).parsebytes(envelope.content)
         from_address = msg['from']
         to_address = msg['to']
         subject = msg['subject']
-        
-        # Convert the email message to a string to forward it
-        body = msg.get_payload(decode=True).decode('utf-8', errors='replace')
+
+        # Handle multi-part and single-part messages
+        if msg.is_multipart():
+            body = ''.join(part.get_payload(decode=True).decode('utf-8', errors='replace')
+                           for part in msg.get_payload())
+        else:
+            body = msg.get_payload(decode=True).decode('utf-8', errors='replace')
 
         print(f'Received email from: {from_address}')
         
