@@ -63,8 +63,6 @@ class CustomMessageHandler:
             print('HTTP Status Code:', response.status_code)
             print('Response Headers:', response.headers)
             print('Response Content:', response.text)
-            response.raise_for_status()  # Raise an exception for HTTP errors
-            print('Email forwarded:', response.status_code, response.json())
         except requests.exceptions.RequestException as e:
             print('Failed to forward email:', e)
             if e.response is not None:
