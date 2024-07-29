@@ -15,10 +15,14 @@ db_config = {
     'password': 'Amir208079@',
     'database': 'sendgrid'
 }
-db = mysql.connector.connect(**db_config)
-cursor = db.cursor()
 
-print('Connected to database.')
+try:
+    db = mysql.connector.connect(**db_config)
+    cursor = db.cursor()
+    print('Connected to database.')
+except mysql.connector.Error as err:
+    print(f"Error: {err}")
+    exit(1)
 
 # SSL/TLS Options
 ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
