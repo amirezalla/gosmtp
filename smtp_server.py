@@ -86,9 +86,9 @@ def get_server_ip_address():
 
 async def start_server():
     handler = CustomMessageHandler()
-    controller = Controller(handler, hostname='0.0.0.0', port=1025, ssl_context=ssl_context)
+    controller = Controller(handler, hostname='0.0.0.0', port=1024, ssl_context=ssl_context)
     controller.start()
-    print(f'SMTP server running on port 1025 with SSL')
+    print(f'SMTP server running on port 1024 with SSL')
     try:
         await asyncio.Future()  # Run forever
     except KeyboardInterrupt:
